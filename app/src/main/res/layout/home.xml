@@ -9,103 +9,110 @@
     android:fitsSystemWindows="false"
     tools:context=".Home">
 
-
     <!-- Header -->
-
-
-    <TextView
-        android:id="@+id/AgriLink"
-        android:layout_width="110dp"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/quicksandmeduim"
-        android:gravity="center"
-        android:text="AgriLink"
-        android:textColor="@color/black"
-        android:textSize="25sp"
-        app:layout_constraintBottom_toTopOf="@+id/footerLayout"
+    <FrameLayout
+        android:id="@+id/top_nav_container"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        app:layout_constraintBottom_toBottomOf="@id/footerLayout"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.053"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.076" />
+        app:layout_constraintVertical_bias="0.0" />
 
+    <!-- Title Text for Climate Section -->
 
-    <ImageView
-        android:id="@+id/weather"
-        android:layout_width="40dp"
-        android:layout_height="30dp"
-        android:src="@drawable/weather"
-        app:layout_constraintBottom_toTopOf="@+id/footerLayout"
+    <!-- Weather Section (Horizontal Scrolling) -->
+    <TextView
+        android:id="@+id/weatherReport"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableEnd="@drawable/arrow_forward"
+        android:drawablePadding="8dp"
+        android:fontFamily="@font/quicksandmeduim"
+        android:paddingStart="10dp"
+        android:text="Weather"
+        android:textColor="@color/black"
+        android:textSize="23sp"
+        app:layout_constraintBottom_toTopOf="@id/weather"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.648"
-        app:layout_constraintStart_toEndOf="@+id/AgriLink"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.075" />
-
-    <ImageView
-        android:id="@+id/calendar"
-        android:layout_width="40dp"
-        android:layout_height="30dp"
-        android:src="@drawable/calendar"
-        app:layout_constraintBottom_toTopOf="@+id/footerLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.434"
-        app:layout_constraintStart_toEndOf="@+id/weather"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.075" />
-
-
-    <!--    <ViewFlipper-->
-    <!--        android:id="@+id/image_carousel"-->
-    <!--        android:layout_width="300dp"-->
-    <!--        android:layout_height="200dp"-->
-    <!--        android:inAnimation="@android:anim/slide_in_left"-->
-    <!--        android:outAnimation="@android:anim/slide_out_right"-->
-    <!--        app:layout_constraintBottom_toBottomOf="parent"-->
-    <!--        app:layout_constraintEnd_toEndOf="parent"-->
-    <!--        app:layout_constraintHorizontal_bias="0.495"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent"-->
-    <!--        app:layout_constraintVertical_bias="0.177" />-->
-
-
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="@+id/carousel4"
-        app:layout_constraintEnd_toEndOf="@+id/carousel2"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="@+id/carousel1"
-        app:layout_constraintTop_toTopOf="@+id/carousel3"
+        app:layout_constraintHorizontal_bias="0.139"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/top_nav_container"
         app:layout_constraintVertical_bias="1.0" />
 
-    <LinearLayout
-        android:id="@+id/dotLayout"
-        android:layout_width="0dp"
-        android:layout_height="9dp"
-        android:gravity="center"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent"
+
+    <HorizontalScrollView
+        android:id="@+id/weather"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:scrollbars="none"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/viewPager"
-        app:layout_constraintVertical_bias="0.025" />
+        app:layout_constraintTop_toBottomOf="@id/top_nav_container">
+
+        <LinearLayout
+            android:id="@+id/weatherContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="130dp"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <!-- Weather Cards will be added here dynamically -->
+
+        </LinearLayout>
+    </HorizontalScrollView>
 
     <TextView
-        android:layout_width="200dp"
-        android:layout_height="100dp"
-        android:gravity="center"
-        android:text="Home"
-        android:textColor="@color/gray"
-        android:textSize="45sp"
-        app:layout_constraintBottom_toBottomOf="@+id/footerLayout"
+        android:id="@+id/recommended_crops"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recommended Crops"
+        android:textColor="@color/black"
+        android:textSize="23sp"
+        android:fontFamily="@font/quicksandmeduim"
+        app:layout_constraintBottom_toTopOf="@id/footerLayout"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintHorizontal_bias="0.185"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.404" />
+        app:layout_constraintTop_toBottomOf="@id/weather"
+        app:layout_constraintVertical_bias="0.019" />
+
+
+
+    <ScrollView
+        android:id="@+id/cropScrollView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:fillViewport="true"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/recommended_crops"
+        app:layout_constraintBottom_toTopOf="@id/footerLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <GridLayout
+                android:id="@+id/cropContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2"
+                android:padding="8dp" />
+        </LinearLayout>
+
+    </ScrollView>
+
+
+
+
+    <!-- Footer Layout -->
 
     <LinearLayout
         android:id="@+id/footerLayout"
@@ -119,11 +126,12 @@
 
         <!-- Home Icon -->
         <ImageView
+            android:id="@+id/home"
             android:layout_width="0dp"
-            android:layout_height="23dp"
+            android:layout_height="27dp"
             android:layout_weight="1"
             android:contentDescription="Home"
-            android:src="@drawable/home" />
+            android:src="@drawable/home1" />
 
         <!-- Location Icon -->
         <ImageView
@@ -131,46 +139,18 @@
             android:layout_width="0dp"
             android:layout_height="23dp"
             android:layout_weight="1"
-            android:src="@drawable/location_1" />
+            android:src="@drawable/location_logo" />
 
         <!-- Settings Icon -->
         <ImageView
             android:id="@+id/user_profile"
             android:layout_width="0dp"
-            android:layout_height="23dp"
+            android:layout_height="27dp"
             android:layout_weight="1"
             android:contentDescription="Cart"
-            android:src="@drawable/user_profile" />
+            android:src="@drawable/profile2" />
 
     </LinearLayout>
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/carousel1"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent="0.12" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/carousel2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        app:layout_constraintGuide_percent=".88" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/carousel3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.14" />
-
-    <androidx.constraintlayout.widget.Guideline
-        android:id="@+id/carousel4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.28" />
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/navigation_bottom"
@@ -178,6 +158,5 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.94" />
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

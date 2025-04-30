@@ -1,10 +1,14 @@
 package com.example.loginapp;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,10 +17,13 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.google.android.material.button.MaterialButton;
+
 
 public class Profile extends AppCompatActivity {
 
-    private Button log_out;
+    private TextView log_out;
+    private TextView username;
     MyDatabaseHelper databaseHelper;
 
     private boolean isColorDark(int color){
@@ -48,31 +55,121 @@ public class Profile extends AppCompatActivity {
             );
         }
 
-        databaseHelper = new MyDatabaseHelper(this);
-
-        log_out = findViewById(R.id.logout);
-
-        log_out.setOnClickListener(new View.OnClickListener() {
+        // Navigation to the home
+        ImageView home = findViewById(R.id.home);
+        home.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                databaseHelper.deleteData();
-                Toast.makeText(Profile.this, "Log out Successfully!", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(Profile.this, MainActivity.class));
-                finishAffinity();
+                startActivity(new Intent(Profile.this, Home.class));
             }
         });
 
+        // Navigation to the market
+        ImageView location = findViewById(R.id.location);
+        location.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View  v) {
+                startActivity(new Intent(Profile.this, Market_Location.class));
+            }       
+        });
+
+        // Navigation to the profile
+        ImageView user_profile = findViewById(R.id.user_profile);
+        user_profile.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+            }
+        });
+
+        databaseHelper = new MyDatabaseHelper(this);
+
+        // Retrieve shared preferences
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        String userEmail = sharedPreferences.getString("email", null);
+
+        username = findViewById(R.id.username);
+
+        if(userEmail != null){
+            getUserDetails(userEmail);
+        }
+
+        // logout
+        log_out = findViewById(R.id.logout);
+        log_out.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                logout();
+            }
+        });
+
+        TextView edit_profile = findViewById(R.id.editProfile);
+        edit_profile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(Profile.this, Farmers_Details.class));
+            }
+        });
+
+        // Button Request
+        // In your Activity or Fragment:
+        MaterialButton checkRequestsButton = findViewById(R.id.checkRequestsButton);
+
+        checkRequestsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Implement your logic here, for example:
+                // Open a new activity or show a fragment where the farmer can view their requests
+                Intent intent = new Intent(Profile.this, Requests.class);
+                startActivity(intent);
+            }
+        });
+
+
         // Fragment
-        addFragment();
+//        addFragment();
     }
 
-    public void addFragment(){
+//    public void addFragment(){
+//
+//        Fragment fragment = new MyProfile();
+//        FragmentManager fm = getSupportFragmentManager();
+//        FragmentTransaction ft = fm.beginTransaction();
+//        ft.replace(R.id.frag_container, fragment);
+//        ft.commit();
+//
+//    }
 
-        Fragment fragment = new MyProfile();
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-        ft.replace(R.id.frag_container, fragment);
-        ft.commit();
+    @Override
+    public void onResume(){
+        super.onResume();
+
+        ImageView profile = findViewById(R.id.user_profile);
+        profile.setImageResource(R.drawable.profile_active);
+    }
+
+    // Method to get user info
+    public void getUserDetails(String email){
+        Cursor cursor = databaseHelper.getUserDetails(email);
+
+        if(cursor.moveToFirst()){
+            String name = cursor.getString(cursor.getColumnIndexOrThrow("username"));
+            String userEmail = cursor.getString(cursor.getColumnIndexOrThrow("email"));
+
+            username.setText(name);
+        }
 
     }
+
+    // Logout method
+    public void logout(){
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear(); // removes all session data like email and isLoggedIn
+        editor.apply();
+
+        Toast.makeText(Profile.this, "Logged out successfully!", Toast.LENGTH_SHORT).show();
+        finishAffinity();
+        startActivity(new Intent(Profile.this, MainActivity.class));
+    }
+
 }

@@ -9,7 +9,7 @@
     <!-- Use ConstraintLayout instead of CardView -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
-        android:layout_height="220dp"
+        android:layout_height="200dp"
         android:background="@drawable/top_nav"> <!-- Rounded corners drawable -->
 
         <RelativeLayout
@@ -19,25 +19,27 @@
             >
 
             <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="101dp"
+                android:layout_width="160dp"
+                android:layout_height="100dp"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
                 android:layout_marginStart="0dp"
-                android:layout_marginTop="35dp"
-                android:src="@drawable/main_logo" />
+                android:layout_marginTop="40dp"
+                android:src="@drawable/agrilogo2" />
 
-            <SearchView
+            <androidx.appcompat.widget.SearchView
                 android:id="@+id/searchView"
                 android:layout_width="280dp"
                 android:layout_height="40dp"
                 android:layout_centerHorizontal="true"
-                android:layout_marginTop="160dp"
+                android:layout_marginTop="140dp"
                 android:background="@drawable/roundcorners_reg"
                 android:queryHint="Search here ... "
                 android:theme="@style/CustomSearchView" />
 
+
             <ImageView
+                android:id="@+id/calendar"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
                 android:layout_centerVertical="true"

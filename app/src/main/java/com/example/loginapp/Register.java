@@ -10,6 +10,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -53,6 +54,7 @@ public class Register extends AppCompatActivity{
                 startActivity(new Intent(Register.this,MainActivity.class));
             }
         });
+
     }
 
 
@@ -66,22 +68,29 @@ public class Register extends AppCompatActivity{
         String email = reg_email.getText().toString();
         String checkPass = check_password.getText().toString();
 
-        if(username.isEmpty() || password.isEmpty() || email.isEmpty() || checkPass.isEmpty()){
-            Toast.makeText(Register.this, "Please fill up the needed data!", Toast.LENGTH_SHORT).show();
-        }else if(!password.equals(checkPass)) {
-            Toast.makeText(Register.this, "Password doesn't match. Please re-enter password.", Toast.LENGTH_SHORT).show();
-            check_password.setText("");
-        }else{
-            boolean isRegistered = databaseHelper.registerUser(username, email, password);
-            if(isRegistered){
-                Toast.makeText(Register.this, "Register Successfully", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(Register.this, MainActivity.class));
-                finish();
-            }else{
-                Toast.makeText(Register.this, "User already exist!", Toast.LENGTH_SHORT).show();
-            }
+        Spinner userType= findViewById(R.id.userTypeSpinner); // move here!
+        String selectedRole = userType.getSelectedItem().toString();
+
+        if(username.isEmpty() || password.isEmpty() || email.isEmpty() || checkPass.isEmpty() || selectedRole.equals("Select user type")){
+            Toast.makeText(Register.this, "Please fill up all fields including user type!", Toast.LENGTH_SHORT).show();
+            return;
         }
 
+        if(!password.equals(checkPass)) {
+            Toast.makeText(Register.this, "Password doesn't match. Please re-enter password.", Toast.LENGTH_SHORT).show();
+            check_password.setText("");
+            return;
+        }
 
+        // Register to DB with selectedType
+        boolean isRegistered = databaseHelper.registerUser(username, email, password, selectedRole);
+        if(isRegistered){
+            Toast.makeText(Register.this, "Register Successfully", Toast.LENGTH_SHORT).show();
+            startActivity(new Intent(Register.this, MainActivity.class));
+            finish();
+        }else{
+            Toast.makeText(Register.this, "User already exist!", Toast.LENGTH_SHORT).show();
+        }
     }
+
 }

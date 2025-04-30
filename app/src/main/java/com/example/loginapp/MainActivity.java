@@ -18,6 +18,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText userEmail, userPassword;
     private Button login;
     private TextView next;
+    private SharedPreferences sharedPreferences;
 
     MyDatabaseHelper databaseHelper;
 
@@ -31,6 +32,21 @@ public class MainActivity extends AppCompatActivity {
         getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+
+        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        boolean isLoggedIn = sharedPreferences.getBoolean("isLoggedIn", false);
+        String role = sharedPreferences.getString("role", "");
+
+        if (isLoggedIn) {
+            if (role.equalsIgnoreCase("vendor")) {
+                startActivity(new Intent(MainActivity.this, Vendor.class));
+                finish();
+            } else if (role.equalsIgnoreCase("farmer")) {
+                startActivity(new Intent(MainActivity.this, Home.class));
+                finish();
+            }
+        }
+
 
 
         userEmail = findViewById(R.id.email);
@@ -56,31 +72,61 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void validation(){
+    public void validation() {
 
         databaseHelper = new MyDatabaseHelper(this);
 
         String email = userEmail.getText().toString();
         String password = userPassword.getText().toString();
 
-        if(databaseHelper.checkUser(email, password)){
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Please enter all fields!", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-            // Storing username in SharedPreferences
-            SharedPreferences sharedPreferences = getSharedPreferences("UserSession", Context.MODE_PRIVATE);
+        String role = databaseHelper.checkUserRole(email, password);
+
+        if (role != null) {
+            String[] userInfo = role.split(",");
+            String userId = userInfo[0];
+            String username = userInfo[1];
+            String userRole = userInfo[2];
+
+            sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+
+            // Save to SharedPreferences
             SharedPreferences.Editor editor = sharedPreferences.edit();
+            editor.putBoolean("isLoggedIn", true);
             editor.putString("email", email);
+            editor.putString("role", userRole);
+            editor.putString("userId", userId); // optional: save userId
+            editor.putString("username", username);
             editor.apply();
 
             Toast.makeText(MainActivity.this, "Login Successfully!", Toast.LENGTH_SHORT).show();
-            startActivity(new Intent(MainActivity.this, Home.class));
+            Toast.makeText(MainActivity.this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
+
+            // If vendor, save vendor_id and name to markets table
+            if (userRole.equalsIgnoreCase("vendor")) {
+                // Check first if already exists to avoid duplicate
+                if (!databaseHelper.isVendorInMarkets(userId)) {
+                    databaseHelper.addVendorToMarkets(Integer.parseInt(userId), username);
+                }
+                startActivity(new Intent(MainActivity.this, Vendor.class));
+            } else if (userRole.equalsIgnoreCase("farmer")) {
+                startActivity(new Intent(MainActivity.this, Home.class));
+            } else {
+                startActivity(new Intent(MainActivity.this, Home.class));
+            }
+
             finish();
-        }else if(email.isEmpty() || password.isEmpty()){
-            Toast.makeText(this, "Please enter all fields!", Toast.LENGTH_SHORT).show();
         }else{
-            Toast.makeText(this, "Username or Password is Incorrect!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Invalid Credentials!", Toast.LENGTH_SHORT).show();
         }
 
+
     }
+
 
 
 

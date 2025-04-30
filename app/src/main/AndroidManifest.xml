@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-
     <!-- Required Permission -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <application
         android:allowBackup="true"
@@ -16,17 +18,51 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.LoginApp"
         tools:targetApi="31">
-
-        <!-- Splash Screen Activity (Launcher) -->
+        <activity
+            android:name=".WeatherReport"
+            android:exported="false" />
+        <activity
+            android:name=".Farmers_Details"
+            android:exported="false" />
+        <activity
+            android:name=".Accepted_Products"
+            android:exported="false" />
+        <activity
+            android:name=".Requests"
+            android:exported="false" />
+        <activity
+            android:name=".AddProducts"
+            android:exported="false" />
+        <activity
+            android:name=".Vendor_Info"
+            android:exported="false" />
+        <activity
+            android:name=".View_Offers"
+            android:exported="false" />
+        <activity
+            android:name=".Request_Sell"
+            android:exported="false"
+            tools:ignore="Instantiatable" />
+        <activity
+            android:name=".Vendor"
+            android:exported="false" />
+        <activity
+            android:name=".Market_Details"
+            android:exported="false" />
         <activity
             android:name=".Splash"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDq_wwsBY9vcdqVJsMAP2kmFcJO74kRjPI" />
 
         <activity
             android:name=".Profile"

@@ -1,0 +1,5 @@
+[versions]
+mpandroidchart = "v3.1.0"
+
+[libraries]
+mpandroidchart = { group = "com.github.PhilJay", name = "MPAndroidChart", version.ref = "mpandroidchart" }

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="#F1F8E9"
+    android:layout_marginBottom="8dp"
+    android:elevation="2dp"
+    android:backgroundTint="#C8E6C9">
+
+    <TextView
+        android:id="@+id/farmerName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="#2E7D32"
+        android:textStyle="bold"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/productName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/quicksandmeduim"
+        android:textColor="#000000"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/productPrice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/quicksandmeduim"
+        android:textColor="#1B5E20"
+        android:textSize="16sp"  />
+
+    <TextView
+        android:id="@+id/productQuantity"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/quicksandmeduim"
+        android:textColor="#33691E"
+        android:textSize="16sp"  />
+
+    <TextView
+        android:id="@+id/deliveryDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/quicksandmeduim"
+        android:textColor="#558B2F"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/offerStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/quicksandmeduim"
+        android:textColor="#558B2F"
+        android:textSize="16sp" />
+
+
+    <Button
+        android:id="@+id/btnReceived"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Received"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/white"
+        android:layout_gravity="end"
+        android:layout_marginEnd="10dp"
+        android:backgroundTint="@color/shade1_green"
+        />
+
+
+</LinearLayout>

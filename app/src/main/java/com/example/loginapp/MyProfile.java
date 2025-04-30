@@ -1,6 +1,7 @@
 package com.example.loginapp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.os.Bundle;
@@ -17,7 +18,8 @@ import android.widget.Toast;
 
 public class MyProfile extends Fragment {
 
-    private TextView user_name, user_email, logout;
+    private TextView user_name;
+    private TextView user_email;
     private MyDatabaseHelper databaseHelper;
 
 
@@ -27,17 +29,20 @@ public class MyProfile extends Fragment {
         // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_my_profile, container, false);
 
-        logout = view.findViewById(R.id.click);
+        TextView logout = view.findViewById(R.id.click);
 
         logout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getActivity(), "Hello this is fragment", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getActivity(), "Log out Successfully!", Toast.LENGTH_SHORT).show();
+
+                logout();
             }
         });
 
         user_name = view.findViewById(R.id.user_name);
         user_email = view.findViewById(R.id.user_email);
+
         databaseHelper = new MyDatabaseHelper(getActivity());
 
 
@@ -56,8 +61,8 @@ public class MyProfile extends Fragment {
         Cursor cursor = databaseHelper.getUserDetails(email);
 
         if(cursor.moveToFirst()){
-            String name = cursor.getString(cursor.getColumnIndex("username"));
-            String userEmail = cursor.getString(cursor.getColumnIndex("email"));
+            String name = cursor.getString(cursor.getColumnIndexOrThrow("username"));
+            String userEmail = cursor.getString(cursor.getColumnIndexOrThrow("email"));
 
             user_name.setText(name);
             user_email.setText(userEmail);
@@ -65,4 +70,16 @@ public class MyProfile extends Fragment {
 
         cursor.close();
     }
+
+    // Logout User
+    public void logout() {
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.clear(); // removes all session data like email and isLoggedIn
+        editor.apply();
+
+        requireActivity().finishAffinity(); // closes all activities
+        startActivity(new Intent(getActivity(), MainActivity.class)); // opens login screen
+    }
+
 }

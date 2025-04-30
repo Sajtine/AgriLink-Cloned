@@ -14,4 +14,6 @@
     <color name="gray">#808080</color>
     <color name="light_gray">#D3D3D3</color>
     <color name="shade1_green">#00B251</color>
+    <color name="navigationShadowColor">#E0E0E0</color> <!-- Light gray shadow -->
+    <color name="navigationBackgroundColor">#FFFFFF</color> <!-- White background or any color you choose -->
 </resources>

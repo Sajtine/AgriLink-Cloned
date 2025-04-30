@@ -1,47 +1,70 @@
 package com.example.loginapp;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.location.Location;
 import android.os.Bundle;
-import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.GridLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-import android.widget.ViewFlipper;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import androidx.viewpager2.widget.ViewPager2;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
+import com.bumptech.glide.Glide;
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.gson.Gson;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class Home extends AppCompatActivity {
 
-    private ImageView loc;
-    private ImageView user;
+    private ImageView loc, user;
+    private FusedLocationProviderClient fusedLocationClient;
+    private static final int LOCATION_PERMISSION_REQUEST_CODE = 1001;
 
-    // Set of Trials for Image Carousel
-//    private ViewFlipper carousel;
-//    private int[] images = {R.drawable.image1, R.drawable.image2, R.drawable.image3};
+    ForecastResponse forecastResponse;
+    WeatherResponse currentWeather;
 
-    private ViewPager2 viewPager;
-    private LinearLayout dotLayout;
-    private int[] images = {R.drawable.image1, R.drawable.image2, R.drawable.image3};
-    private ImageAdapter imageAdapter;
-    private Handler handler;
-    private Runnable runnable;
-    private int currentPage = 0;
-    private ImageView dots[];
 
     private boolean isColorDark(int color) {
-        // Calculate luminance based on RGB components
         double darkness = 1 - (0.299 * Color.red(color) +
                 0.587 * Color.green(color) +
                 0.114 * Color.blue(color)) / 255;
-        return darkness >= 0.5; // Return true if the color is dark
+        return darkness >= 0.5;
     }
 
     @Override
@@ -53,92 +76,48 @@ public class Home extends AppCompatActivity {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-        // To identify background color
-        int backgroundColor = ContextCompat.getColor(this, R.color.white); // Replace with your actual color resource
-
+        int backgroundColor = ContextCompat.getColor(this, R.color.white);
         if (isColorDark(backgroundColor)) {
-            // Light icons for dark background
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
         } else {
-            // Dark icons for light background
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
 
-        // Image Carousel
-//        carousel = findViewById(R.id.image_carousel);
-//
-//        for(int image : images){
-//            ImageView imageView = new ImageView(this);
-//            imageView.setImageResource(image);
-//            carousel.addView(imageView);
-//        }
-//        carousel.setFlipInterval(2000);
-//        carousel.setAutoStart(true);
-//        carousel.startFlipping();
-
-
-
-        // Image Carousel
-        viewPager = findViewById(R.id.viewPager);
-        dotLayout = findViewById(R.id.dotLayout);
-
-        viewPager.setAdapter(new ImageAdapter(this, images));
-
-        dots = new ImageView[images.length];
-        for(int i = 0; i < images.length; i++){
-            dots[i] = new ImageView(this);
-            dots[i].setImageResource(R.drawable.dot_active);
-            dots[i].setPadding(8, 0, 8, 0);
-            dotLayout.addView(dots[i]);
-        }
-
-        updateDots(0);
-
-        // Change dot indicators on swipe
-        viewPager.registerOnPageChangeCallback(new ViewPager2.OnPageChangeCallback() {
-            @Override
-            public void onPageSelected(int position) {
-                updateDots(position);
-                currentPage = position;
-            }
-        });
-
-        // Start auto-slide
-        startAutoSlide();
-
-        // Direct to the Location Window
         loc = findViewById(R.id.location);
-        loc.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(Home.this, Market_Location.class));
-            }
-        });
-
-        // User Profile
         user = findViewById(R.id.user_profile);
 
-        user.setOnClickListener(new View.OnClickListener() {
+        loc.setOnClickListener(v -> startActivity(new Intent(Home.this, Market_Location.class)));
+        user.setOnClickListener(v -> startActivity(new Intent(Home.this, Profile.class)));
+
+        addFragment();
+
+        // Navigation to Weather Reports Page
+        TextView weather_report = findViewById(R.id.weatherReport);
+        weather_report.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(Home.this, Profile.class));
+               if(forecastResponse != null){
+                   Intent intent = new Intent(Home.this, WeatherReport.class);
+                   intent.putExtra("forecastData", forecastResponse);
+                   intent.putExtra("currentWeatherData", currentWeather);
+                   startActivity(intent);
+               }else{
+                   Toast.makeText(Home.this, "No weather data available", Toast.LENGTH_SHORT).show();
+               }
             }
         });
 
-        ImageView cal = findViewById(R.id.calendar);
+        // Location initialization
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        getUserLocation();
 
-        cal.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                popupWindow(v);
-            }
-        });
+        // Display crops suggestion
+        displayCrops();
     }
 
-    // Method for popupWindow
-    private void popupWindow(View anchorView){
+    private void popupWindow(View anchorView) {
         View popupView = LayoutInflater.from(this).inflate(R.layout.calendar_popup, null);
 
         PopupWindow popupWindow = new PopupWindow(
@@ -152,33 +131,311 @@ public class Home extends AppCompatActivity {
         popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, -450);
     }
 
-
-    private void updateDots(int position) {
-        for (int i = 0; i < dots.length; i++) {
-            dots[i].setImageResource(i == position ? R.drawable.dot_active : R.drawable.dot_inactive);
-        }
-    }
-
-    private void startAutoSlide() {
-        handler = new Handler();
-        runnable = new Runnable() {
-            @Override
-            public void run() {
-                if (currentPage == images.length - 1) {
-                    currentPage = 0; // Reset to first page
-                } else {
-                    currentPage++;
-                }
-                viewPager.setCurrentItem(currentPage, true);
-                handler.postDelayed(this, 4000); // Change image every 3 seconds
-            }
-        };
-        handler.postDelayed(runnable, 3000);
+    public void addFragment() {
+        Fragment fragment = new topNav();
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        ft.replace(R.id.top_nav_container, fragment);
+        ft.commit();
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        handler.removeCallbacks(runnable); // Stop auto-slide when activity is destroyed
+    public void onResume() {
+        super.onResume();
+        ImageView home = findViewById(R.id.home);
+        home.setImageResource(R.drawable.home1);
+        Log.d("Activity Checker", "Home");
     }
+
+    private void getUserLocation() {
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST_CODE);
+            return;
+        }
+
+        fusedLocationClient.getLastLocation()
+                .addOnSuccessListener(this, location -> {
+                    if (location != null) {
+                        double latitude = location.getLatitude();
+                        double longitude = location.getLongitude();
+                        getWeatherData(latitude, longitude);
+                    } else {
+                        // fallback if location is unavailable
+                        getWeatherData(10.7202, 122.5621);
+                    }
+                });
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getUserLocation();
+            } else {
+                Toast.makeText(this, "Location permission denied. Showing default weather.", Toast.LENGTH_SHORT).show();
+                getWeatherData(10.7202, 122.5621);
+            }
+        }
+    }
+
+    // Get current weather data
+    public void getWeatherData(double lat, double lon) {
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://api.openweathermap.org/data/2.5/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        WeatherApi weatherApi = retrofit.create(WeatherApi.class);
+
+        // Step 1: First get current weather
+        Call<WeatherResponse> currentWeatherCall = weatherApi.getCurrentWeatherByCoordinates(lat, lon, "2def0fc1c9ce3fc0cffa4d2c2adca8b6", "metric");
+        currentWeatherCall.enqueue(new Callback<WeatherResponse>() {
+            @Override
+            public void onResponse(Call<WeatherResponse> call, Response<WeatherResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    currentWeather = response.body();
+
+                    // Step 2: Then get forecast
+                    getForecastData(lat, lon, currentWeather);
+                } else {
+                    Toast.makeText(Home.this, "Failed to load current weather.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<WeatherResponse> call, Throwable t) {
+                Toast.makeText(Home.this, "Network error.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    // get forecast data
+    public void getForecastData(double lat, double lon, WeatherResponse currentWeather){
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl("https://api.openweathermap.org/data/2.5/")
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        WeatherApi weatherApi = retrofit.create(WeatherApi.class);
+
+        Call<ForecastResponse> forecastCall = weatherApi.getForecastByCoordinates(lat, lon, "2def0fc1c9ce3fc0cffa4d2c2adca8b6", "metric");
+
+        forecastCall.enqueue(new Callback<ForecastResponse>() {
+            @Override
+            public void onResponse(Call<ForecastResponse> call, Response<ForecastResponse> response) {
+                if(response.isSuccessful() && response.body() != null){
+                    ForecastResponse forecastResponse = response.body();
+                    Home.this.forecastResponse = response.body();
+
+                    displayWeather(currentWeather, forecastResponse);
+
+                }else{
+                    Toast.makeText(Home.this, "Failed to load forecast.", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ForecastResponse> call, Throwable t) {
+                Toast.makeText(Home.this, "Network error.", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    // Display the weather
+    private void displayWeather(WeatherResponse currentWeather, ForecastResponse forecastResponse) {
+        LinearLayout weatherContainer = findViewById(R.id.weatherContainer);
+        weatherContainer.removeAllViews();
+
+        SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
+        SimpleDateFormat onlyDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
+        SimpleDateFormat dayNameFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
+
+        Date currentDate = new Date();
+        String todayDateStr = onlyDateFormat.format(currentDate);
+
+        Map<String, List<ForecastResponse.ForecastItem>> dailyForecasts = new HashMap<>();
+
+        for (ForecastResponse.ForecastItem item : forecastResponse.list) {
+            try {
+                Date forecastDateTime = fullDateFormat.parse(item.dateTime);
+                String forecastDateStr = onlyDateFormat.format(forecastDateTime);
+
+                dailyForecasts.computeIfAbsent(forecastDateStr, k -> new ArrayList<>()).add(item);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+        }
+
+        List<String> sortedDates = new ArrayList<>(dailyForecasts.keySet());
+        Collections.sort(sortedDates);
+
+        // 1. Today (use currentWeather)
+        View todayCard = LayoutInflater.from(Home.this).inflate(R.layout.weather_card_item, weatherContainer, false);
+
+        ImageView weatherIcon = todayCard.findViewById(R.id.weatherIcon);
+        TextView dayText = todayCard.findViewById(R.id.dayText);
+        TextView tempText = todayCard.findViewById(R.id.tempText);
+        TextView minMax = todayCard.findViewById(R.id.minMax);
+
+        String iconCode = currentWeather.weather.get(0).icon;
+        String iconUrl = "https://openweathermap.org/img/wn/" + iconCode + "@2x.png";
+        Glide.with(Home.this).load(iconUrl).into(weatherIcon);
+
+        dayText.setText("Today");
+        tempText.setText(Math.round(currentWeather.main.temp) + "°C");
+
+        String minMax_str = Math.round(currentWeather.main.temp_min) + "° / " + Math.round(currentWeather.main.temp_max) + "°";
+        minMax.setText(minMax_str);
+
+        weatherContainer.addView(todayCard);
+
+        // 2. Next Days (use forecast)
+        for (String forecastDateStr : sortedDates) {
+            if (forecastDateStr.equals(todayDateStr)) {
+                continue; // Skip today since we already showed it
+            }
+
+            List<ForecastResponse.ForecastItem> dayItems = dailyForecasts.get(forecastDateStr);
+
+            ForecastResponse.ForecastItem bestItem = null;
+            long minDifference = Long.MAX_VALUE;
+            float minTemp = Float.MAX_VALUE;
+            float maxTemp = Float.MIN_VALUE;
+
+            for (ForecastResponse.ForecastItem item : dayItems) {
+                try {
+                    Date forecastDateTime = fullDateFormat.parse(item.dateTime);
+
+                    Calendar targetCalendar = Calendar.getInstance();
+                    targetCalendar.setTime(forecastDateTime);
+                    targetCalendar.set(Calendar.HOUR_OF_DAY, 12);
+                    targetCalendar.set(Calendar.MINUTE, 0);
+                    targetCalendar.set(Calendar.SECOND, 0);
+
+                    long difference = Math.abs(forecastDateTime.getTime() - targetCalendar.getTimeInMillis());
+                    if (difference < minDifference) {
+                        minDifference = difference;
+                        bestItem = item;
+                    }
+
+                    if (item.main.tempMin < minTemp) minTemp = item.main.tempMin;
+                    if (item.main.tempMax > maxTemp) maxTemp = item.main.tempMax;
+
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (bestItem != null) {
+                try {
+                    Date bestForecastDate = fullDateFormat.parse(bestItem.dateTime);
+
+                    String dayLabel = dayNameFormat.format(bestForecastDate);
+
+                    View card = LayoutInflater.from(Home.this).inflate(R.layout.weather_card_item, weatherContainer, false);
+
+                    ImageView forecastWeatherIcon = card.findViewById(R.id.weatherIcon);
+                    TextView forecastDayText = card.findViewById(R.id.dayText);
+                    TextView forecastTempText = card.findViewById(R.id.tempText);
+                    TextView forecastMinMax = card.findViewById(R.id.minMax);
+
+                    String forecastIconCode = bestItem.weather.get(0).icon;
+                    String forecastIconUrl = "https://openweathermap.org/img/wn/" + forecastIconCode + "@2x.png";
+                    Glide.with(Home.this).load(forecastIconUrl).into(forecastWeatherIcon);
+
+                    forecastDayText.setText(dayLabel);
+                    forecastTempText.setText(Math.round(bestItem.main.temp) + "°C");
+                    forecastMinMax.setText(Math.round(minTemp) + "° / " + Math.round(maxTemp) + "°");
+
+                    weatherContainer.addView(card);
+
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    // Display crops
+    private void displayCrops() {
+        MyDatabaseHelper dbHelper = new MyDatabaseHelper(this);
+
+        int currentMonth = Calendar.getInstance().get(Calendar.MONTH) + 1;
+        Cursor cursor = dbHelper.getCropsForMonth(currentMonth);
+
+        if (cursor.moveToFirst()) {
+            GridLayout cropContainer = findViewById(R.id.cropContainer);
+            cropContainer.removeAllViews();
+            cropContainer.setColumnCount(2);
+
+            LayoutInflater inflater = LayoutInflater.from(this);
+
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            int margin = 32; // 16dp margin on each side (you set 16 above)
+            int cardWidth = (screenWidth - margin * 3) / 2; // 3 margins: left + right + middle space
+
+            do {
+                String crop_name = cursor.getString(cursor.getColumnIndexOrThrow("crop_name"));
+                Log.d("Crop_Debug", "Crop Name: " + crop_name );
+
+                View cardView = inflater.inflate(R.layout.crop_card, cropContainer, false);
+
+                GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+                params.width = cardWidth;
+                params.setMargins(margin / 2, margin / 2, margin / 2, margin / 2);
+                cardView.setLayoutParams(params);
+
+                // Set crop name
+                TextView cropName = cardView.findViewById(R.id.cropName);
+                cropName.setText(crop_name);
+
+                ImageView cropImage = cardView.findViewById(R.id.cropImage);
+
+                // to determine what crop image to display
+                crop_name = crop_name.toLowerCase();
+
+                switch(crop_name){
+                    case "okra":
+                        cropImage.setImageResource(R.drawable.okra);
+                        break;
+                    case "banana":
+                        cropImage.setImageResource(R.drawable.banana);
+                        break;
+                    case "coconut":
+                        cropImage.setImageResource(R.drawable.coconut);
+                        break;
+                    case "watermelon":
+                        cropImage.setImageResource(R.drawable.watermelon);
+                        break;
+                    case "papaya":
+                        cropImage.setImageResource(R.drawable.papaya);
+                        break;
+                    case "pineapple":
+                        cropImage.setImageResource(R.drawable.pineapple);
+                        break;
+                    case "calamansi":
+                        cropImage.setImageResource(R.drawable.calamnsi);
+                        break;
+                    case "melon":
+                        cropImage.setImageResource(R.drawable.melon);
+                        break;
+                    default:
+                        cropImage.setImageResource(R.drawable.temp);
+                        break;
+                }
+
+
+                cropContainer.addView(cardView);
+
+            } while (cursor.moveToNext());
+        }
+
+        cursor.close();
+    }
+
+
+
 }
