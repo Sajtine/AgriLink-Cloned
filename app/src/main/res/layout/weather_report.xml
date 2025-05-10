@@ -285,6 +285,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:padding="16dp"
+                android:textColor="@color/black"
                 android:text="Forecast will be displayed here" />
         </LinearLayout>
 
@@ -324,6 +325,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
+                    android:textColor="@color/black"
                     android:text="Temp: --°C"
                     android:textSize="16sp" />
 
@@ -332,6 +334,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
+                    android:textColor="@color/black"
                     android:text="Humidity: --%"
                     android:textSize="16sp" />
 
@@ -340,6 +343,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp"
+                    android:textColor="@color/black"
                     android:text="Condition: --"
                     android:textSize="16sp" />
 

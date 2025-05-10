@@ -192,7 +192,7 @@ public class WeatherReport extends AppCompatActivity {
                 // Update the reference
                 currentlySelectedTextView = dayTextView;
 
-                // Rest of your forecast logic...
+                // Forecast Data per Day
                 for (ForecastResponse.ForecastItem item : items) {
                     if (item.dateTime.contains("12:00:00")) {
                         int temp = Math.round(item.main.temp);
@@ -219,9 +219,6 @@ public class WeatherReport extends AppCompatActivity {
                     }
                 }
             });
-
-
-
 
             dayContainer.addView(dayTextView);
         }
@@ -294,10 +291,13 @@ public class WeatherReport extends AppCompatActivity {
         fullDateTimeLabels = new ArrayList<>();
         displayLabels = new ArrayList<>();
 
-        Map<String, List<ForecastResponse.ForecastItem>> forecastByDay = new HashMap<>();
+        // Use LinkedHashMap to preserve day order
+        Map<String, List<ForecastResponse.ForecastItem>> forecastByDay = new LinkedHashMap<>();
         for (ForecastResponse.ForecastItem item : futureForecast) {
-            String day = item.dateTime.substring(0, 10);
-            forecastByDay.computeIfAbsent(day, k -> new ArrayList<>()).add(item);
+            if (item.dateTime != null && item.dateTime.length() >= 10) {
+                String day = item.dateTime.substring(0, 10);
+                forecastByDay.computeIfAbsent(day, k -> new ArrayList<>()).add(item);
+            }
         }
 
         List<ForecastResponse.ForecastItem> allFutureData = new ArrayList<>();
@@ -308,13 +308,12 @@ public class WeatherReport extends AppCompatActivity {
         for (ForecastResponse.ForecastItem item : allFutureData) {
             float temp = item.main.temp;
             entries.add(new Entry(entries.size(), temp));
-
-            fullDateTimeLabels.add(item.dateTime);           // store full "yyyy-MM-dd HH:mm:ss"
-            displayLabels.add(formatHour(item.dateTime));    // store short "3PM" etc for display
+            fullDateTimeLabels.add(item.dateTime);
+            displayLabels.add(formatHour(item.dateTime));
         }
 
         LineDataSet lineDataSet = new LineDataSet(entries, labelName);
-        styleLineDataSet(lineDataSet);
+        styleLineDataSet(lineDataSet); // You should define this method
 
         LineData lineData = new LineData(lineDataSet);
         chart.setData(lineData);
@@ -325,10 +324,11 @@ public class WeatherReport extends AppCompatActivity {
         chart.setVisibleXRangeMaximum(6);
         chart.moveViewToX(0);
 
-        chart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(displayLabels));
-        chart.getXAxis().setPosition(XAxis.XAxisPosition.BOTTOM);
-        chart.getXAxis().setGranularity(1f);
-        chart.getXAxis().setLabelRotationAngle(0f);
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(displayLabels));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setLabelRotationAngle(0f);
 
         YAxis leftAxis = chart.getAxisLeft();
         leftAxis.setXOffset(15f);
@@ -338,6 +338,7 @@ public class WeatherReport extends AppCompatActivity {
 
         chart.invalidate();
     }
+
 
     // update label for the line chart
     private void updateDayLabel(LineChart chart, List<String> labels, TextView dayLabel) {

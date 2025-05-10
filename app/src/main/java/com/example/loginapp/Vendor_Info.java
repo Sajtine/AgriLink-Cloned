@@ -87,15 +87,15 @@ public class Vendor_Info extends AppCompatActivity {
             }
         });
 
-        Button btnAddProducts = findViewById(R.id.btnAddProducts);
-
-       btnAddProducts.setOnClickListener(new View.OnClickListener() {
-
-           @Override
-           public void onClick(View v) {
-               startActivity(new Intent(Vendor_Info.this, AddProducts.class));
-           }
-       });
+//        Button btnAddProducts = findViewById(R.id.btnAddProducts);
+//
+//        btnAddProducts.setOnClickListener(new View.OnClickListener() {
+//
+//           @Override
+//           public void onClick(View v) {
+//               startActivity(new Intent(Vendor_Info.this, AddProducts.class));
+//           }
+//       });
 
     }
 }

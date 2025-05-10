@@ -20,7 +20,7 @@
     public class MyDatabaseHelper extends SQLiteOpenHelper {
 
         private static final String DATABASE_NAME = "AgriLink.db";
-        private static final int DATABASE_VERSION = 18;
+        private static final int DATABASE_VERSION = 19;
 
         // Users Table
         private static final String TABLE_NAME = "users";
@@ -65,6 +65,13 @@
         private static final String COLUMN_CROP_NAME = "crop_name";
         private static final String COLUMN_CROP_PLANTING_MONTHS = "planting_months";
 
+        // Vendor products table
+        private static final String TABLE_VENDOR_PRODUCTS = "vendor_products";
+        private static final String COLUMN_PRODUCT_ID = "product_id";
+        private static final String COLUMN_VENDOR_PRODUCT_NAME = "vendor_product_name";
+        private static final String COLUMN_VENDOR_PRODUCT_PRICE = "vendor_product_price";
+        private static final String COLUMN_PRODUCT_UNIT = "product_unit";
+        private static final String COLUMN_VENDOR_PRODUCT_ID = "vendor_product_id";
 
         private Context context;
 
@@ -122,17 +129,28 @@
                     COLUMN_STATUS + " TEXT DEFAULT 'Pending', " +
                     "FOREIGN KEY(" + COLUMN_VENDOR_ID + ") REFERENCES " + TABLE_NAME + "(" + COLUMN_ID + ") ON DELETE CASCADE);";
 
-
+            // Create Crops Table Query
             String createCropsTable = "CREATE TABLE " + TABLE_CROPS + " (" +
                     COLUMN_CROP_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
                     COLUMN_CROP_NAME + " TEXT, " +
                     COLUMN_CROP_PLANTING_MONTHS + " TEXT);";
 
 
-            db.execSQL(createUsersTable);
-            db.execSQL(createMarketsTable);
-            db.execSQL(createProductOffersTable);
-            db.execSQL(createCropsTable);
+            // Create Vendors Product table
+            String createVendorProductsTable = "CREATE TABLE " + TABLE_VENDOR_PRODUCTS + " (" +
+                    COLUMN_PRODUCT_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                    COLUMN_VENDOR_PRODUCT_NAME + " TEXT, " +
+                    COLUMN_VENDOR_PRODUCT_PRICE + " REAL, " +
+                    COLUMN_PRODUCT_UNIT + " TEXT, " +
+                    COLUMN_VENDOR_PRODUCT_ID + " INTEGER, " +
+                    "FOREIGN KEY(" + COLUMN_VENDOR_PRODUCT_ID + ") REFERENCES " + TABLE_NAME + "(" + COLUMN_ID + ") ON DELETE CASCADE);";
+
+
+//            db.execSQL(createUsersTable);
+//            db.execSQL(createMarketsTable);
+//            db.execSQL(createProductOffersTable);
+//            db.execSQL(createCropsTable);
+            db.execSQL(createVendorProductsTable);
 
 //            importMarketsFromCSV(db);
 
@@ -144,43 +162,43 @@
 
 
             // Add crops data to the table
-            db.execSQL("INSERT INTO " + TABLE_CROPS + " (" + COLUMN_CROP_NAME + ", " + COLUMN_CROP_PLANTING_MONTHS + ") VALUES " +
-                    "('Rice', '6,7,8,9')," +
-                    "('Corn', '5,6,7,8')," +
-                    "('Sugarcane', '10,11,12')," +
-                    "('Tomato', '11,12,1')," +
-                    "('Eggplant', '9,10,11')," +
-                    "('Ampalaya', '9,10,11')," +
-                    "('Okra', '2,3,4,5')," +
-                    "('Onion', '11,12')," +
-                    "('Garlic', '11,12')," +
-                    "('Peanut', '5,6,7')," +
-                    "('Sweet Potato (Kamote)', '5,6,7')," +
-                    "('Cassava', '6,7,8')," +
-                    "('Mango', '12,1,2')," +
-                    "('Banana', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-                    "('Coconut', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-                    "('Coffee', '10,11,12')," +
-                    "('Cabbage', '10,11,12')," +
-                    "('Carrot', '11,12,1')," +
-                    "('Lettuce', '11,12,1,2')," +
-                    "('Chayote', '6,7,8')," +
-                    "('Watermelon', '2,3,4')," +
-                    "('Papaya', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-                    "('Pineapple', '4,5,6')," +
-                    "('Calamansi', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-                    "('Melon (Cantaloupe)', '2,3,4')," +
-                    "('Soybean', '5,6,7')," +
-                    "('Chili Pepper (Siling Labuyo)', '11,12,1')," +
-                    "('Ginger', '4,5,6')," +
-                    "('Turmeric (Luyang Dilaw)', '5,6,7');");
+//            db.execSQL("INSERT INTO " + TABLE_CROPS + " (" + COLUMN_CROP_NAME + ", " + COLUMN_CROP_PLANTING_MONTHS + ") VALUES " +
+//                    "('Rice', '6,7,8,9')," +
+//                    "('Corn', '5,6,7,8')," +
+//                    "('Sugarcane', '10,11,12')," +
+//                    "('Tomato', '11,12,1')," +
+//                    "('Eggplant', '9,10,11')," +
+//                    "('Ampalaya', '9,10,11')," +
+//                    "('Okra', '2,3,4,5')," +
+//                    "('Onion', '11,12')," +
+//                    "('Garlic', '11,12')," +
+//                    "('Peanut', '5,6,7')," +
+//                    "('Sweet Potato (Kamote)', '5,6,7')," +
+//                    "('Cassava', '6,7,8')," +
+//                    "('Mango', '12,1,2')," +
+//                    "('Banana', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+//                    "('Coconut', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+//                    "('Coffee', '10,11,12')," +
+//                    "('Cabbage', '10,11,12')," +
+//                    "('Carrot', '11,12,1')," +
+//                    "('Lettuce', '11,12,1,2')," +
+//                    "('Chayote', '6,7,8')," +
+//                    "('Watermelon', '2,3,4')," +
+//                    "('Papaya', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+//                    "('Pineapple', '4,5,6')," +
+//                    "('Calamansi', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+//                    "('Melon (Cantaloupe)', '2,3,4')," +
+//                    "('Soybean', '5,6,7')," +
+//                    "('Chili Pepper (Siling Labuyo)', '11,12,1')," +
+//                    "('Ginger', '4,5,6')," +
+//                    "('Turmeric (Luyang Dilaw)', '5,6,7');");
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_MARKETS);  // Drop markets table if it exists
-            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_OFFERS);
+//            db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+//            db.execSQL("DROP TABLE IF EXISTS " + TABLE_MARKETS);  // Drop markets table if it exists
+//            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_OFFERS);
             onCreate(db);
         }
 
@@ -424,5 +442,80 @@
 
             return cursor;
         }
+
+        // Add vendors products
+        public boolean addVendorProducts(String product_name, double product_price, String product_unit, int vendor_id){
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+
+            // To check if the product already exists
+            String query = "SELECT * FROM " + TABLE_VENDOR_PRODUCTS +
+                    " WHERE LOWER(vendor_product_name) = LOWER(?) AND vendor_product_id = ?";
+            Cursor cursor = db.rawQuery(query, new String[]{product_name, String.valueOf(vendor_id)});
+
+            if(cursor.getCount() > 0) {
+                cursor.close();
+                return false;
+            }
+
+            values.put("vendor_product_name", product_name);
+            values.put("vendor_product_price", product_price);
+            values.put("product_unit", product_unit);
+            values.put("vendor_product_id", vendor_id);
+
+            long result = db.insert(TABLE_VENDOR_PRODUCTS, null, values);
+
+            return result != -1;
+
+        }
+
+        // Retrieve the products by vendor
+        public ArrayList<String> getVendorProducts(int vendorId) {
+            ArrayList<String> products = new ArrayList<>();
+            SQLiteDatabase db = this.getReadableDatabase();
+            Cursor cursor = db.rawQuery("SELECT vendor_product_name, vendor_product_price, product_unit FROM vendor_products WHERE vendor_product_id = ?", new String[]{String.valueOf(vendorId)});
+
+            if (cursor.moveToFirst()) {
+                do {
+                    String name = cursor.getString(0);
+                    double price = cursor.getDouble(1);
+                    String unit = cursor.getString(2);
+                    products.add(name + " - ₱" + price + "/" + unit);
+                } while (cursor.moveToNext());
+            }
+
+            cursor.close();
+            db.close();
+            return products;
+        }
+
+        // update vendor products
+        public boolean updateVendorProduct(int vendorId, String oldName, String newName, String newPrice, String newUnit) {
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put("vendor_product_name", newName);
+            values.put("vendor_product_price", Double.parseDouble(newPrice));
+            values.put("product_unit", newUnit);
+
+            int rowsAffected = db.update("vendor_products", values, "vendor_product_id = ? AND vendor_product_name = ?", new String[]{String.valueOf(vendorId), oldName});
+
+            return rowsAffected > 0;
+
+        }
+
+        // delete product of the vendor
+        public boolean deleteVendorProduct(int vendorId, String productName) {
+            SQLiteDatabase db = this.getWritableDatabase();
+
+            int result = db.delete(
+                    "vendor_products",
+                    "vendor_product_id = ? AND vendor_product_name = ? COLLATE NOCASE",
+                    new String[]{String.valueOf(vendorId), productName}
+            );
+
+            return result > 0;
+        }
+
+
 
     }
