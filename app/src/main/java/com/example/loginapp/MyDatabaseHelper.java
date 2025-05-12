@@ -146,10 +146,10 @@
                     "FOREIGN KEY(" + COLUMN_VENDOR_PRODUCT_ID + ") REFERENCES " + TABLE_NAME + "(" + COLUMN_ID + ") ON DELETE CASCADE);";
 
 
-//            db.execSQL(createUsersTable);
-//            db.execSQL(createMarketsTable);
-//            db.execSQL(createProductOffersTable);
-//            db.execSQL(createCropsTable);
+            db.execSQL(createUsersTable);
+            db.execSQL(createMarketsTable);
+            db.execSQL(createProductOffersTable);
+            db.execSQL(createCropsTable);
             db.execSQL(createVendorProductsTable);
 
 //            importMarketsFromCSV(db);
@@ -162,43 +162,43 @@
 
 
             // Add crops data to the table
-//            db.execSQL("INSERT INTO " + TABLE_CROPS + " (" + COLUMN_CROP_NAME + ", " + COLUMN_CROP_PLANTING_MONTHS + ") VALUES " +
-//                    "('Rice', '6,7,8,9')," +
-//                    "('Corn', '5,6,7,8')," +
-//                    "('Sugarcane', '10,11,12')," +
-//                    "('Tomato', '11,12,1')," +
-//                    "('Eggplant', '9,10,11')," +
-//                    "('Ampalaya', '9,10,11')," +
-//                    "('Okra', '2,3,4,5')," +
-//                    "('Onion', '11,12')," +
-//                    "('Garlic', '11,12')," +
-//                    "('Peanut', '5,6,7')," +
-//                    "('Kamote', '5,6,7')," +
-//                    "('Cassava', '6,7,8')," +
-//                    "('Mango', '12,1,2')," +
-//                    "('Banana', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-//                    "('Coconut', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-//                    "('Coffee', '10,11,12')," +
-//                    "('Cabbage', '10,11,12')," +
-//                    "('Carrot', '11,12,1')," +
-//                    "('Lettuce', '11,12,1,2')," +
-//                    "('Chayote', '6,7,8')," +
-//                    "('Watermelon', '2,3,4')," +
-//                    "('Papaya', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-//                    "('Pineapple', '4,5,6')," +
-//                    "('Calamansi', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-//                    "('Melon', '2,3,4')," +
-//                    "('Soybean', '5,6,7')," +
-//                    "('Chili Pepper (Siling Labuyo)', '11,12,1')," +
-//                    "('Ginger', '4,5,6')," +
-//                    "('Turmeric (Luyang Dilaw)', '5,6,7');");
+            db.execSQL("INSERT INTO " + TABLE_CROPS + " (" + COLUMN_CROP_NAME + ", " + COLUMN_CROP_PLANTING_MONTHS + ") VALUES " +
+                    "('Rice', '6,7,8,9')," +
+                    "('Corn', '5,6,7,8')," +
+                    "('Sugarcane', '10,11,12')," +
+                    "('Tomato', '11,12,1')," +
+                    "('Eggplant', '9,10,11')," +
+                    "('Ampalaya', '9,10,11')," +
+                    "('Okra', '2,3,4,5')," +
+                    "('Onion', '11,12')," +
+                    "('Garlic', '11,12')," +
+                    "('Peanut', '5,6,7')," +
+                    "('Kamote', '5,6,7')," +
+                    "('Cassava', '6,7,8')," +
+                    "('Mango', '12,1,2')," +
+                    "('Banana', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+                    "('Coconut', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+                    "('Coffee', '10,11,12')," +
+                    "('Cabbage', '10,11,12')," +
+                    "('Carrot', '11,12,1')," +
+                    "('Lettuce', '11,12,1,2')," +
+                    "('Chayote', '6,7,8')," +
+                    "('Watermelon', '2,3,4')," +
+                    "('Papaya', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+                    "('Pineapple', '4,5,6')," +
+                    "('Calamansi', '1,2,3,4,5,6,7,8,9,10,11,12')," +
+                    "('Melon', '2,3,4')," +
+                    "('Soybean', '5,6,7')," +
+                    "('Chili Pepper (Siling Labuyo)', '11,12,1')," +
+                    "('Ginger', '4,5,6')," +
+                    "('Turmeric (Luyang Dilaw)', '5,6,7');");
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-//            db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
-//            db.execSQL("DROP TABLE IF EXISTS " + TABLE_MARKETS);  // Drop markets table if it exists
-//            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_OFFERS);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_MARKETS);  // Drop markets table if it exists
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_OFFERS);
             onCreate(db);
         }
 
