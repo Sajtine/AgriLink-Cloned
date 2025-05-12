@@ -6,7 +6,6 @@
     android:layout_height="wrap_content"
     card_view:cardCornerRadius="8dp"
     card_view:cardElevation="4dp"
-    android:background="@drawable/crop_card_border"
     android:layout_margin="8dp">
 
     <LinearLayout
@@ -14,6 +13,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="8dp"
+        android:background="@drawable/crop_card_border"
         android:gravity="center_horizontal">
 
         <ImageView
