@@ -15,6 +15,7 @@
         android:layout_height="wrap_content"
         android:textColor="#2E7D32"
         android:textStyle="bold"
+        android:text="Farmer Name"
         android:textSize="16sp" />
 
     <TextView
@@ -23,6 +24,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/quicksandmeduim"
         android:textColor="#000000"
+        android:text="Product name"
         android:textSize="16sp" />
 
     <TextView
@@ -31,6 +33,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/quicksandmeduim"
         android:textColor="#1B5E20"
+        android:text="Product Price"
         android:textSize="16sp"  />
 
     <TextView
@@ -39,6 +42,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/quicksandmeduim"
         android:textColor="#33691E"
+        android:text="Product Quantity"
         android:textSize="16sp"  />
 
     <TextView
@@ -47,6 +51,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/quicksandmeduim"
         android:textColor="#558B2F"
+        android:text="Delivery Date"
         android:textSize="16sp" />
 
     <TextView
@@ -55,6 +60,7 @@
         android:layout_height="wrap_content"
         android:fontFamily="@font/quicksandmeduim"
         android:textColor="#558B2F"
+        android:text="Offer Status"
         android:textSize="16sp" />
 
 

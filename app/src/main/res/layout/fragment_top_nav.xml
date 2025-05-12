@@ -45,7 +45,7 @@
                 android:layout_centerVertical="true"
                 android:layout_alignParentEnd="true"
                 android:layout_marginEnd="40dp"
-                android:src="@drawable/calendar_white" />
+                android:src="@drawable/message" />
 
         </RelativeLayout>
 

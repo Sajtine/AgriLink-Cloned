@@ -94,7 +94,7 @@
         android:id="@+id/logout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:drawableStart="@drawable/logout"
+        android:drawableStart="@drawable/log_out"
         android:drawablePadding="10dp"
         android:fontFamily="@font/quicksandregular"
         android:text="Logout"

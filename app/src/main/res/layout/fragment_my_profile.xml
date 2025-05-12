@@ -95,7 +95,7 @@
                 android:layout_marginTop="28dp"
                 android:layout_marginEnd="30dp"
                 android:paddingBottom="5dp"
-                android:drawableStart="@drawable/logout"
+                android:drawableStart="@drawable/log_out"
                 android:drawablePadding="10dp"
                 android:fontFamily="@font/quicksandmeduim"
                 android:text="Logout"

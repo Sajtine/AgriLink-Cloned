@@ -173,7 +173,7 @@
 //                    "('Onion', '11,12')," +
 //                    "('Garlic', '11,12')," +
 //                    "('Peanut', '5,6,7')," +
-//                    "('Sweet Potato (Kamote)', '5,6,7')," +
+//                    "('Kamote', '5,6,7')," +
 //                    "('Cassava', '6,7,8')," +
 //                    "('Mango', '12,1,2')," +
 //                    "('Banana', '1,2,3,4,5,6,7,8,9,10,11,12')," +
@@ -187,7 +187,7 @@
 //                    "('Papaya', '1,2,3,4,5,6,7,8,9,10,11,12')," +
 //                    "('Pineapple', '4,5,6')," +
 //                    "('Calamansi', '1,2,3,4,5,6,7,8,9,10,11,12')," +
-//                    "('Melon (Cantaloupe)', '2,3,4')," +
+//                    "('Melon', '2,3,4')," +
 //                    "('Soybean', '5,6,7')," +
 //                    "('Chili Pepper (Siling Labuyo)', '11,12,1')," +
 //                    "('Ginger', '4,5,6')," +
@@ -323,6 +323,13 @@
             return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
         }
 
+        // Get all received products and the database
+        public Cursor getAllReceivedProducts(int vendorId){
+            SQLiteDatabase db = this.getReadableDatabase();
+            String query = "SELECT id, farmer_name, farmer_number, product_name, price, quantity FROM " + TABLE_PRODUCT_OFFERS +  " WHERE status = 'Received' AND vendor_id = ?";
+            return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
+        }
+
         // Get market info
         public Cursor getMarketInfoByVendorId(int vendorId) {
             SQLiteDatabase db = this.getReadableDatabase();
@@ -352,7 +359,7 @@
             return rowsAffected > 0;
         }
 
-        // Get status
+        // Get status of the requests or the farmers offer status
         public ArrayList<HashMap<String, String>> getProductOffersByStatus(String status, int farmerId) {
             ArrayList<HashMap<String, String>> offerList = new ArrayList<>();
             SQLiteDatabase db = this.getReadableDatabase();
@@ -393,24 +400,14 @@
         }
 
 
-
-        // Update Status
-//        public void updateOfferStatus(int offerId, String newStatus) {
-//            SQLiteDatabase db = this.getWritableDatabase();
-//            ContentValues values = new ContentValues();
-//            values.put(COLUMN_STATUS, newStatus);
-//            db.update(TABLE_PRODUCT_OFFERS, values, COLUMN_PRODUCT_OFFER_ID + " = ?", new String[]{String.valueOf(offerId)});
-//            db.close();
-//        }
-
-        // Approved Products
+        // Approved Products or Accepted Products
         public Cursor getApprovedOffersByVendor(int vendorId) {
             SQLiteDatabase db = this.getReadableDatabase();
 
             // Query to select only approved offers for the given vendorId
             String query = "SELECT * FROM " + TABLE_PRODUCT_OFFERS + " WHERE " +
                     COLUMN_VENDOR_ID + " = ? AND " +
-                    COLUMN_STATUS + " = 'Accepted'";  // Assuming 'approved' is the status we need
+                    COLUMN_STATUS + " = 'Accepted'";  //
 
             return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
         }
