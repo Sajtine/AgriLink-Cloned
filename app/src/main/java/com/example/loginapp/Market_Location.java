@@ -17,6 +17,7 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
@@ -354,7 +355,6 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                             markerList.add(marketMarker);
                         }
 
-                        // Create CardView for each row
                         CardView cardView = new CardView(Market_Location.this);
                         GridLayout.LayoutParams params = new GridLayout.LayoutParams();
                         params.width = 0;
@@ -362,48 +362,81 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                         params.rowSpec = GridLayout.spec(GridLayout.UNDEFINED);
                         params.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
 
-                        // Set margins for CardView to add space between each card
-                        int margin = (int) getResources().getDimension(R.dimen.card_margin); // Define this dimension in res/values/dimens.xml
-                        params.setMargins(margin, margin, margin, margin);  // Add margin to all sides of the card
-
+                        // Margin around card
+                        int margin = (int) getResources().getDimension(R.dimen.card_margin);
+                        params.setMargins(margin, margin, margin, margin);
                         cardView.setLayoutParams(params);
-                        cardView.setCardBackgroundColor(getResources().getColor(R.color.shade1_green));  // Set background color
-                        cardView.setRadius(12f);  // Rounded corners
 
-                        // Create LinearLayout to hold the TextViews
+                        // Card styling
+                        cardView.setCardBackgroundColor(ContextCompat.getColor(Market_Location.this, R.color.shade1_green));
+                        cardView.setRadius(24f); // Softer rounded corners
+                        cardView.setCardElevation(12f); // More shadow for depth
+                        cardView.setUseCompatPadding(true); // Ensure shadow padding
+
+                        // Inner layout
                         LinearLayout linearLayout = new LinearLayout(Market_Location.this);
                         linearLayout.setOrientation(LinearLayout.VERTICAL);
-                        linearLayout.setPadding(12, 12, 12, 12);  // Padding inside CardView
+                        linearLayout.setPadding(36, 36, 36, 36);
+                        linearLayout.setGravity(Gravity.START); // Align content to left
 
-                        // Create TextViews for City, Market, and Vendor
-                        TextView cityTextView = new TextView(Market_Location.this);
-                        cityTextView.setText(barangay);
-                        cityTextView.setTextColor(getResources().getColor(R.color.white));  // Set white text color
-                        cityTextView.setTextSize(14);
-
-                        TextView marketTextView = new TextView(Market_Location.this);
-                        marketTextView.setText(marketName);
-                        marketTextView.setTextColor(getResources().getColor(R.color.white));
-                        marketTextView.setTextSize(12);
-
+                        // Vendor Name (Highlight)
                         TextView vendorTextView = new TextView(Market_Location.this);
-                        vendorTextView.setText(vendorName);
-                        vendorTextView.setTextColor(getResources().getColor(R.color.white));
+                        vendorTextView.setText("👤 " + vendorName);  // Optional: Emoji for simple icon
+                        vendorTextView.setTextColor(ContextCompat.getColor(Market_Location.this, R.color.white));
                         vendorTextView.setTextSize(20);
-                        vendorTextView.setTypeface(null, Typeface.BOLD);  // Bold text for vendor name
+                        vendorTextView.setTypeface(null, Typeface.BOLD);
+                        vendorTextView.setPadding(0, 0, 0, 12);
 
+                        // Market Name
+                        TextView marketTextView = new TextView(Market_Location.this);
+                        marketTextView.setText("Market: " + marketName);
+                        marketTextView.setTextColor(ContextCompat.getColor(Market_Location.this, R.color.white));
+                        marketTextView.setTextSize(15);
+                        marketTextView.setPadding(0, 0, 0, 8);
 
-                        Button detailsButton = new Button(Market_Location.this);;
+                        // Barangay
+                        TextView barangayTextView = new TextView(Market_Location.this);
+                        barangayTextView.setText("Brgy: " + barangay);
+                        barangayTextView.setTextColor(ContextCompat.getColor(Market_Location.this, R.color.white));
+                        barangayTextView.setTextSize(15);
+                        barangayTextView.setPadding(0, 0, 0, 8);
+
+                        // Distance
+                        Location userLocation = new Location("");
+                        userLocation.setLatitude(userLat);
+                        userLocation.setLongitude(userLong);
+
+                        Location marketLocation = new Location("");
+                        marketLocation.setLatitude(finalLat);
+                        marketLocation.setLongitude(finalLong);
+
+                        float distance = userLocation.distanceTo(marketLocation);
+                        float distanceInKm = distance / 1000;
+
+                        TextView distanceTextView = new TextView(Market_Location.this);
+                        distanceTextView.setText("Distance: " + String.format("%.2f", distanceInKm) + " km");
+                        distanceTextView.setTextColor(ContextCompat.getColor(Market_Location.this, R.color.white));
+                        distanceTextView.setTextSize(15);
+                        distanceTextView.setPadding(0, 0, 0, 16);
+
+                        // Button (keep original styling)
+                        Button detailsButton = new Button(Market_Location.this);
                         detailsButton.setTextSize(12);
                         detailsButton.setTextColor(Color.WHITE);
                         detailsButton.setText("Details");
 
-                        // Navigate to the Details Page
+                        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                        );
+                        btnParams.topMargin = 16;
+                        detailsButton.setLayoutParams(btnParams);
+
+                        // Intent
                         detailsButton.setOnClickListener(new View.OnClickListener() {
                             @Override
                             public void onClick(View v) {
                                 Intent intent = new Intent(Market_Location.this, Market_Details.class);
-                                // Put data into the intent
                                 intent.putExtra("marketName", marketName);
                                 intent.putExtra("vendorName", vendorName);
                                 intent.putExtra("vendor_id", vendor_id);
@@ -415,49 +448,18 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                             }
                         });
 
-                        // Set only top margin
-                        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
-                                LinearLayout.LayoutParams.WRAP_CONTENT,
-                                LinearLayout.LayoutParams.WRAP_CONTENT
-                        );
-                        btnParams.topMargin = 16;  // Moves the button slightly downward (16 pixels)
-
-                        // Apply the layout params to the button
-                        detailsButton.setLayoutParams(btnParams);
-
-                        // Add TextViews to LinearLayout
-                        linearLayout.addView(cityTextView);
-                        linearLayout.addView(marketTextView);
+                        // Add views
                         linearLayout.addView(vendorTextView);
+                        linearLayout.addView(marketTextView);
+                        linearLayout.addView(barangayTextView);
+                        linearLayout.addView(distanceTextView);
+                        linearLayout.addView(detailsButton);
 
-
-                        // Add LinearLayout to CardView
                         cardView.addView(linearLayout);
-
-                        // Add CardView to GridLayout
                         gridLayout.addView(cardView);
 
-                        // Get market distance
-                        Location userLocation = new Location("");
-                        userLocation.setLatitude(userLat);  // User's latitude
-                        userLocation.setLongitude(userLong);  // User's longitude
 
-                        Location marketLocation = new Location("");
-                        marketLocation.setLatitude(finalLat);
-                        marketLocation.setLongitude(finalLong);
 
-                        float distance = userLocation.distanceTo(marketLocation); // Distance in meters
-                        float distanceInKm = distance / 1000;  // Convert meters to kilometers
-
-                        // Optionally, you can add a TextView to show the distance on the CardView
-                        TextView distanceTextView = new TextView(Market_Location.this);
-                        distanceTextView.setText("Distance: " + String.format("%.2f", distanceInKm) + " km");
-                        distanceTextView.setTextColor(getResources().getColor(R.color.white));
-                        linearLayout.addView(distanceTextView);
-
-                        // Added the button to the Linear Layout
-//                        linearLayout.addView(navigateButton);
-                        linearLayout.addView(detailsButton);
 
                         // ✅ Set click listener to focus map on this market and add marker
                         cardView.setOnClickListener(new View.OnClickListener() {

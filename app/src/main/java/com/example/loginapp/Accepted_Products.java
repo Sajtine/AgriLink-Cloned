@@ -13,8 +13,11 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 
 public class Accepted_Products extends AppCompatActivity {
 
@@ -117,6 +120,10 @@ public class Accepted_Products extends AppCompatActivity {
 
     private void updateOfferStatusToReceived(int position) {
         int offerId = Integer.parseInt(approvedOfferList.get(position).get("id"));
-        dbHelper.updateOfferStatus(offerId, "Received");
+
+        SimpleDateFormat sdf  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        String currentDate = sdf.format(new Date());
+
+        dbHelper.markOfferAsReceived(offerId, currentDate);
     }
 }

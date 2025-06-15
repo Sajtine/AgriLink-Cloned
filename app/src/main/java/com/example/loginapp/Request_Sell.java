@@ -16,6 +16,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 
 
@@ -103,11 +105,16 @@ public class Request_Sell extends DialogFragment {
             String username = sharedPreferences.getString("username", null);
             String farmer_number = phone_number;
 
+            // Get current time
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String currentDate = sdf.format(new Date());
+
+
             if (name.isEmpty() || qty.isEmpty() || prc.isEmpty()) {
                 Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
             } else {
                 MyDatabaseHelper dbHelper = new MyDatabaseHelper(getContext());
-                boolean inserted = dbHelper.insertRequest(name, Integer.parseInt(qty), Double.parseDouble(prc), date, note, vendorId, Integer.parseInt(userId), username, farmer_number);
+                boolean inserted = dbHelper.insertRequest(name, Integer.parseInt(qty), Double.parseDouble(prc), date, note, vendorId, Integer.parseInt(userId), username, farmer_number, currentDate);
 
                 if (inserted) {
                     Toast.makeText(getContext(), "Request Sent!", Toast.LENGTH_SHORT).show();

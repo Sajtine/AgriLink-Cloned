@@ -19,6 +19,12 @@
         android:theme="@style/Theme.LoginApp"
         tools:targetApi="31">
         <activity
+            android:name=".Chat"
+            android:exported="false" />
+        <activity
+            android:name=".ChatList"
+            android:exported="false" />
+        <activity
             android:name=".Product_History"
             android:exported="false" />
         <activity

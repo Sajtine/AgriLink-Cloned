@@ -1,5 +1,6 @@
 package com.example.loginapp;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.PorterDuff;
 import android.os.Bundle;
@@ -22,7 +23,7 @@ public class topNav extends Fragment {
         // Required empty public constructor
     }
 
-    private ImageView calendar;
+    private ImageView messages;
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -38,30 +39,16 @@ public class topNav extends Fragment {
             searchIcon.setImageResource(R.drawable.search); // make sure this matches your drawable file name
         }
 
-
-        calendar = view.findViewById(R.id.calendar);
-        calendar.setOnClickListener(new View.OnClickListener() {
+        messages = view.findViewById(R.id.messages);
+        messages.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                popupWindow(v);
-
+                startActivity(new Intent(requireActivity(), ChatList.class));
             }
         });
+
 
         return view;
     }
 
-    private void popupWindow(View anchorView){
-        View popupView = LayoutInflater.from(requireContext()).inflate(R.layout.calendar_popup, null);
-
-        PopupWindow popupWindow = new PopupWindow(
-                popupView,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT,
-                true
-        );
-
-        popupWindow.setElevation(10);
-        popupWindow.showAtLocation(anchorView, Gravity.CENTER, 0, -450);
-    }
 }

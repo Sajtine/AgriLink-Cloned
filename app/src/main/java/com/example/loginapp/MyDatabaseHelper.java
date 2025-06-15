@@ -8,6 +8,8 @@
     import android.util.Log;
     import android.widget.Toast;
 
+    import com.google.firebase.database.DatabaseReference;
+    import com.google.firebase.database.FirebaseDatabase;
     import com.opencsv.CSVReader;
 
     import java.io.InputStreamReader;
@@ -20,7 +22,7 @@
     public class MyDatabaseHelper extends SQLiteOpenHelper {
 
         private static final String DATABASE_NAME = "AgriLink.db";
-        private static final int DATABASE_VERSION = 19;
+        private static final int DATABASE_VERSION = 21;
 
         // Users Table
         private static final String TABLE_NAME = "users";
@@ -58,6 +60,8 @@
         private static final String COLUMN_DELIVERY_DATE = "delivery_date";
         private static final String COLUMN_NOTE = "note";
         private static final String COLUMN_STATUS = "status";
+        private static final String COLUMN_REQUEST_DATE = "request_date";
+        private static final String COLUMN_RECEIVED_DATE = "received_date";
 
         // Crops Table
         private static final String TABLE_CROPS = "crops";
@@ -127,6 +131,8 @@
                     COLUMN_DELIVERY_DATE + " TEXT, " +
                     COLUMN_NOTE + " TEXT, " +
                     COLUMN_STATUS + " TEXT DEFAULT 'Pending', " +
+                    COLUMN_REQUEST_DATE + " TEXT, " +
+                    COLUMN_RECEIVED_DATE + " TEXT, " +
                     "FOREIGN KEY(" + COLUMN_VENDOR_ID + ") REFERENCES " + TABLE_NAME + "(" + COLUMN_ID + ") ON DELETE CASCADE);";
 
             // Create Crops Table Query
@@ -214,9 +220,36 @@
 
             long result = db.insert(TABLE_NAME, null, values);
             db.close();
-            return result != -1;
+
+            if (result != -1) {
+                // Save user to Firebase after SQLite insert
+                saveUserToFirebase(username, email, password, userRole);
+                return true;
+            } else {
+                return false;
+            }
         }
 
+        // Add user data to firebase
+        private void saveUserToFirebase(String username, String email, String password, String userRole){
+            FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+            DatabaseReference usersRef = database.getReference("users");
+
+            String userId = usersRef.push().getKey();
+
+            if(userId != null){
+                HashMap<String, String> userMap = new HashMap<>();
+                userMap.put("username", username);
+                userMap.put("email", email);
+                userMap.put("password", password);
+                userMap.put("userRole", userRole);
+
+                usersRef.child(userId).setValue(userMap)
+                        .addOnSuccessListener(aVoid -> Log.d("Firebase", "User saved successfully"))
+                        .addOnFailureListener(e -> Log.d("Firebase", "Failed to save user"));
+            }
+        }
 
         // Check Login
         public String checkUserRole(String email, String password) {
@@ -276,7 +309,7 @@
 
 
         // Method to store request in the db
-        public boolean insertRequest(String product_name, int quantity, double price, String delivery_date, String note, int vendor_id, int farmer_id, String farmer_name, String phone_number){
+        public boolean insertRequest(String product_name, int quantity, double price, String delivery_date, String note, int vendor_id, int farmer_id, String farmer_name, String phone_number, String request_date){
             SQLiteDatabase db = this.getWritableDatabase();
             ContentValues values = new ContentValues();
 
@@ -289,6 +322,7 @@
             values.put("farmer_id", farmer_id);
             values.put("farmer_name", farmer_name);
             values.put("farmer_number", phone_number);
+            values.put("request_date", request_date);
 
             long result = db.insert(TABLE_PRODUCT_OFFERS, null, values);
             return result != -1;
@@ -323,11 +357,17 @@
             return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
         }
 
-        // Get all received products and the database
+        // Get all prodcuts received by the vendor
         public Cursor getAllReceivedProducts(int vendorId){
             SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT id, farmer_name, farmer_number, product_name, price, quantity FROM " + TABLE_PRODUCT_OFFERS +  " WHERE status = 'Received' AND vendor_id = ?";
+            String query = "SELECT id, farmer_name, farmer_number, product_name, price, quantity, status, received_date FROM " + TABLE_PRODUCT_OFFERS +  " WHERE status = 'Received' AND vendor_id = ?";
             return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
+        }
+
+        // Get products sold by vendor
+        public Cursor getVendorProductsSold(int vendorId) {
+            SQLiteDatabase db = this.getReadableDatabase();
+            return db.rawQuery("SELECT * FROM vendor_products WHERE vendor_product_id = ?", new String[]{String.valueOf(vendorId)});
         }
 
         // Get market info
@@ -413,7 +453,7 @@
         }
 
 
-        // Update Products by vendor or the status
+        // Update Products by vendor or the status (Accept and Decline)
         public void updateOfferStatus(int offerId, String newStatus) {
             SQLiteDatabase db = this.getWritableDatabase();
             ContentValues values = new ContentValues();
@@ -423,6 +463,15 @@
             db.update("product_offers", values, COLUMN_PRODUCT_OFFER_ID + " = ?", new String[]{String.valueOf(offerId)});
         }
 
+        // For received status and the date
+        public void markOfferAsReceived(int offerId, String currentDate){
+            SQLiteDatabase db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put("status", "Received");
+            values.put("received_date", currentDate);
+
+            db.update("product_offers", values, COLUMN_PRODUCT_OFFER_ID + " =?", new String[]{String.valueOf(offerId)});
+        }
 
         // Get crops by month
         public Cursor getCropsForMonth(int month) {

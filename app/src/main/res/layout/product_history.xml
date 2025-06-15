@@ -18,6 +18,16 @@
         android:gravity="center"
         android:layout_marginBottom="16dp" />
 
+    <TextView
+        android:id="@+id/noHistoryMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No product history found."
+        android:textColor="#888888"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_marginBottom="10dp"/>
+
     <ListView
         android:id="@+id/product_historyListView"
         android:layout_width="match_parent"

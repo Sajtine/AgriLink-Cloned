@@ -221,7 +221,7 @@
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigation_view"
         android:layout_width="225dp"
-        android:layout_height="300dp"
+        android:layout_height="380dp"
         android:layout_gravity="end"
         android:background="@android:color/white"
         app:headerLayout="@layout/nav_header"
