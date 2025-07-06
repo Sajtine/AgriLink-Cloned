@@ -54,14 +54,32 @@
                 android:ellipsize="end" />
         </LinearLayout>
 
-        <!-- Time -->
-        <TextView
-            android:id="@+id/chat_time"
+        <!-- Right section: time + unread count -->
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="12:45 PM"
-            android:textSize="12sp"
-            android:textColor="#999999"
-            android:layout_marginStart="8dp" />
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="end|center_vertical">
+
+            <TextView
+                android:id="@+id/chat_time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="12:45 PM"
+                android:textSize="12sp"
+                android:textColor="#999999" />
+
+            <TextView
+                android:id="@+id/chat_unread_count"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="end|center_vertical"
+                android:background="@drawable/circle_badge"
+                android:textColor="#FFFFFF"
+                android:gravity="center"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:text="1" />
+        </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

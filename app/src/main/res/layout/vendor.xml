@@ -16,8 +16,42 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:padding="8dp">
 
+            <!-- Message Icon with Badge -->
+            <FrameLayout
+                android:id="@+id/messageIconWrapper"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_gravity="end"
+                android:layout_marginEnd="48dp"> <!-- Gives space from the profile icon -->
+
+                <ImageView
+                    android:id="@+id/messages"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/message_icon2"
+                    android:contentDescription="Messages" />
+
+                <TextView
+                    android:id="@+id/badgeCount"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_gravity="top|end"
+                    android:layout_marginTop="2dp"
+                    android:layout_marginEnd="2dp"
+                    android:background="@drawable/circle_badge"
+                    android:gravity="center"
+                    android:text="0"
+                    android:textSize="10sp"
+                    android:textColor="@android:color/white"
+                    android:visibility="gone"
+                    android:elevation="4dp" />
+            </FrameLayout>
+
+            <!-- Profile Icon -->
             <ImageView
                 android:id="@+id/profile"
                 android:layout_width="30dp"
@@ -28,8 +62,10 @@
                 android:src="@drawable/profile2"
                 android:scaleType="centerCrop"
                 android:background="@drawable/circle"
-                android:clipToOutline="true" />
+                android:clipToOutline="true"
+                android:contentDescription="Profile" />
         </FrameLayout>
+
 
 
         <ImageView

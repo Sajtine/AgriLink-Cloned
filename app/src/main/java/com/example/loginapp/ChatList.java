@@ -51,6 +51,7 @@ public class ChatList extends AppCompatActivity {
                 chatUsers.clear();
                 ChatUserAdapter.lastMessages.clear();
                 ChatUserAdapter.lastMessageTimes.clear();
+                ChatUserAdapter.unreadCounts.clear(); // 🔴 Reset unread count map
 
                 for (DataSnapshot chatRoom : snapshot.getChildren()) {
                     String key = chatRoom.getKey();
@@ -63,8 +64,9 @@ public class ChatList extends AppCompatActivity {
                             chatUsers.add(otherUser);
                         }
 
-                        // ✅ Get latest message by timestamp
                         Message latestMsg = null;
+                        int unreadCount = 0;
+
                         for (DataSnapshot msgSnap : chatRoom.getChildren()) {
                             Message msg = msgSnap.getValue(Message.class);
 
@@ -73,17 +75,26 @@ public class ChatList extends AppCompatActivity {
                                     msg.receiverId != null &&
                                     (msg.senderId.equals(currentUser) || msg.receiverId.equals(currentUser))) {
 
+                                // Latest message logic
                                 if (latestMsg == null || msg.timestamp > latestMsg.timestamp) {
                                     latestMsg = msg;
+                                }
+
+                                // 🔴 Count unread messages sent to current user by the other user
+                                if (msg.receiverId.equals(currentUser) &&
+                                        msg.senderId.equals(otherUser) &&
+                                        !msg.isRead) {
+                                    unreadCount++;
                                 }
                             }
                         }
 
-                        // ✅ Store only the latest message
                         if (latestMsg != null) {
                             ChatUserAdapter.lastMessages.put(otherUser, latestMsg.message);
                             ChatUserAdapter.lastMessageTimes.put(otherUser, formatTime(latestMsg.timestamp));
                         }
+
+                        ChatUserAdapter.unreadCounts.put(otherUser, unreadCount); // 🔴 Save count
                     }
                 }
 

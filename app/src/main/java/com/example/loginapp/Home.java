@@ -142,6 +142,13 @@ public class Home extends AppCompatActivity {
     @Override
     public void onResume() {
         super.onResume();
+
+        // 🔄 Reload the topNav fragment to refresh the badge or icon
+        topNav topFragment = (topNav) getSupportFragmentManager().findFragmentById(R.id.top_nav_container); // use your actual container ID
+        if (topFragment != null) {
+            topFragment.refreshBadge(); // Custom method you’ll add below
+        }
+
         ImageView home = findViewById(R.id.home);
         home.setImageResource(R.drawable.home1);
         Log.d("Activity Checker", "Home");

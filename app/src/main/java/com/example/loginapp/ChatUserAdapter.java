@@ -15,6 +15,7 @@ public class ChatUserAdapter extends BaseAdapter {
     // ✅ Added for last message and time
     public static HashMap<String, String> lastMessages = new HashMap<>();
     public static HashMap<String, String> lastMessageTimes = new HashMap<>();
+    public static HashMap<String, Integer> unreadCounts = new HashMap<>();
 
     public ChatUserAdapter(Context context, ArrayList<String> users) {
         this.context = context;
@@ -39,12 +40,13 @@ public class ChatUserAdapter extends BaseAdapter {
 
     static class ViewHolder {
         ImageView profile;
-        TextView username, lastMessage, time;
+        TextView username, lastMessage, time, unreadBadge;
     }
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder holder;
+
 
         if (convertView == null) {
             convertView = inflater.inflate(R.layout.chatlist_item, parent, false);
@@ -53,6 +55,7 @@ public class ChatUserAdapter extends BaseAdapter {
             holder.username = convertView.findViewById(R.id.chat_username);
             holder.lastMessage = convertView.findViewById(R.id.chat_last_message);
             holder.time = convertView.findViewById(R.id.chat_time);
+            holder.unreadBadge = convertView.findViewById(R.id.chat_unread_count);
             convertView.setTag(holder);
         } else {
             holder = (ViewHolder) convertView.getTag();
@@ -73,6 +76,19 @@ public class ChatUserAdapter extends BaseAdapter {
             holder.time.setText(lastMessageTimes.get(user));
         } else {
             holder.time.setText("");
+        }
+
+        // For unread counts
+        if(unreadCounts.containsKey(user)) {
+            int count = unreadCounts.get(user);
+            if (count > 0){
+                holder.unreadBadge.setText(count > 99 ? "99+" : String.valueOf(count));
+                holder.unreadBadge.setVisibility(View.VISIBLE);
+            }else{
+                holder.unreadBadge.setVisibility(View.GONE);
+            }
+        }else{
+            holder.unreadBadge.setVisibility(View.GONE);
         }
 
         // Set default profile image

@@ -10,6 +10,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
+import androidx.appcompat.widget.Toolbar;
+
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -37,6 +39,10 @@ public class Chat extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
+        // set chatWith name
+        Toolbar toolbar = findViewById(R.id.chatToolbar);
+        setSupportActionBar(toolbar);
+
         chatList = findViewById(R.id.chatList);
         messageInput = findViewById(R.id.messageInput);
         send = findViewById(R.id.sendBtn);
@@ -54,6 +60,13 @@ public class Chat extends AppCompatActivity {
                 : chatWith + "_" + currentUser;
 
         dbRef = FirebaseDatabase.getInstance().getReference("chats").child(chatRoom);
+
+        // condition
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setTitle(chatWith);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Enables back arrow
+        }
+
 
         messages = new ArrayList<>();
 
@@ -93,7 +106,7 @@ public class Chat extends AppCompatActivity {
             String text = messageInput.getText().toString().trim();
 
             if (!text.isEmpty()) {
-                Message msg = new Message(currentUser, chatWith, text, System.currentTimeMillis());
+                Message msg = new Message(currentUser, chatWith, text, System.currentTimeMillis(), false);
                 dbRef.push().setValue(msg);
                 messageInput.setText("");
             }
@@ -107,6 +120,16 @@ public class Chat extends AppCompatActivity {
                     Message msg = snap.getValue(Message.class);
                     if (msg != null) {
                         messages.add(msg);
+
+                        // ✅ Only mark as read if:
+                        // 1. The message is for currentUser
+                        // 2. The message is from the person you're chatting with
+                        // 3. It hasn't been read yet
+                        if (msg.receiverId.equals(currentUser)
+                                && msg.senderId.equals(chatWith)
+                                && !msg.isRead) {
+                            snap.getRef().child("isRead").setValue(true);
+                        }
                     }
                 }
                 adapter.notifyDataSetChanged();
@@ -118,5 +141,13 @@ public class Chat extends AppCompatActivity {
                 // handle error
             }
         });
+
+    }
+
+    // method for back arrow
+    @Override
+    public boolean onSupportNavigateUp() {
+        finish();
+        return true;
     }
 }

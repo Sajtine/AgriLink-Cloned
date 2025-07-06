@@ -7,17 +7,25 @@ import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import androidx.activity.OnBackPressedCallback;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 public class Vendor extends AppCompatActivity {
 
     TextView welcomeText;
     SharedPreferences sharedPreferences;
+    private TextView badgeCount;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +34,9 @@ public class Vendor extends AppCompatActivity {
 
         welcomeText = findViewById(R.id.welcomeText);
         sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+
+        // Badge notif id
+        badgeCount = findViewById(R.id.badgeCount);
 
         // Get vendor name
         String username = sharedPreferences.getString("username", "Vendor");
@@ -38,37 +49,52 @@ public class Vendor extends AppCompatActivity {
             drawerLayout.openDrawer(GravityCompat.END);
         });
 
+        // Handle back button in drawer menu
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if(drawerLayout.isDrawerOpen(GravityCompat.END)){
+                    drawerLayout.closeDrawer(GravityCompat.END);
+                }else{
+                    finish();
+                }
+            }
+        });
+
+        // Menu destination
         NavigationView navigationView = findViewById(R.id.navigation_view);
 
         navigationView.setNavigationItemSelectedListener(item -> {
             int id = item.getItemId();
 
-            if(id == R.id.nav_displayedProduct) {
-                Intent intent = new Intent(Vendor.this, VendorProducts.class);
-                startActivity(intent);
-                return true;
-            }else if(id == R.id.nav_logout) {
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.clear();
-                editor.apply();
+            // Close the drawer first
+            drawerLayout.closeDrawer(GravityCompat.END);
 
-                Intent intent = new Intent(Vendor.this, MainActivity.class);
-                startActivity(intent);
+            // Delay navigation slightly so the drawer closes smoothly first
+            new android.os.Handler().postDelayed(() -> {
+                if (id == R.id.nav_displayedProduct) {
+                    startActivity(new Intent(Vendor.this, VendorProducts.class));
+                } else if (id == R.id.nav_history) {
+                    startActivity(new Intent(Vendor.this, Product_History.class));
+                } else if (id == R.id.nav_logout) {
+                    SharedPreferences.Editor editor = sharedPreferences.edit();
+                    editor.clear();
+                    editor.apply();
 
-                return true;
-            }else if(id == R.id.nav_history){
-                Intent intent = new Intent(Vendor.this, Product_History.class);
-                startActivity(intent);
-                return true;
-            }
+                    Intent intent = new Intent(Vendor.this, MainActivity.class);
+                    startActivity(intent);
+                    finish(); // Optional: end current activity on logout
+                }
+            }, 250); // delay in milliseconds (adjust if needed)
 
-            return false;
+            return true;
         });
+
 
         // Nav username
         TextView navUsername = navigationView.getHeaderView(0).findViewById(R.id.nav_username);
         navUsername.setText(username);
-        
+
         welcomeText.setText("Welcome, " + username + "!");
 
         //CardViews
@@ -101,5 +127,63 @@ public class Vendor extends AppCompatActivity {
             Intent intent = new Intent(Vendor.this, AddProducts.class);
             startActivity(intent);
         });
+
+        // Call the method for badge notif
+        checkUnreadMessages();
+
+
+    }
+
+    // Notification Badge for unread messages
+    private void checkUnreadMessages() {
+        SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
+        String currentUser = prefs.getString("username", "");
+
+        DatabaseReference chatsRef = FirebaseDatabase.getInstance().getReference("chats");
+
+        chatsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                int unreadCount = 0;
+
+                for(DataSnapshot roomSnap : snapshot.getChildren()){
+                    for (DataSnapshot msgSnap : roomSnap.getChildren()){
+                        Message msg = msgSnap.getValue(Message.class);
+                        if (msg != null && msg.receiverId.equals(currentUser) && !msg.isRead) {
+
+                            unreadCount++;
+                        }
+                    }
+                }
+
+                if (unreadCount > 0){
+                    showBadge(unreadCount);
+                }else{
+                    hideBadge();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+    }
+
+    // Method to show bagde notif
+    private void showBadge(int count){
+        badgeCount.setText(String.valueOf(count));
+        badgeCount.setVisibility(View.VISIBLE);
+    }
+
+    private void hideBadge(){
+        badgeCount.setVisibility(View.GONE);
+    }
+
+    // Check the unread messages when returned to the page
+    @Override
+    protected void onResume(){
+        super.onResume();
+        checkUnreadMessages();
     }
 }
