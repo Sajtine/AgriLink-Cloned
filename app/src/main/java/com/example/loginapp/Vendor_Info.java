@@ -10,6 +10,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -87,15 +88,19 @@ public class Vendor_Info extends AppCompatActivity {
             }
         });
 
-//        Button btnAddProducts = findViewById(R.id.btnAddProducts);
-//
-//        btnAddProducts.setOnClickListener(new View.OnClickListener() {
-//
-//           @Override
-//           public void onClick(View v) {
-//               startActivity(new Intent(Vendor_Info.this, AddProducts.class));
-//           }
-//       });
+        // check info if completed
+        boolean infoCheck = getIntent().getBooleanExtra("info_complete", true);
+        if(!infoCheck){
+            showInfoDialog();
+        }
+    }
 
+    // note for vendors
+    private void showInfoDialog(){
+        new AlertDialog.Builder(this)
+                .setTitle("Important Information!")
+                .setMessage("Welcome to AgriLink! Before you can access the main features, please complete your profile information. We assure you that your data will be kept private and secure.")
+                .setPositiveButton("OK", null)
+                .show();
     }
 }

@@ -26,6 +26,7 @@ public class Vendor extends AppCompatActivity {
     TextView welcomeText;
     SharedPreferences sharedPreferences;
     private TextView badgeCount;
+    private ImageView messages;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +91,13 @@ public class Vendor extends AppCompatActivity {
             return true;
         });
 
+        // to message destination
+        messages = findViewById(R.id.messages);
+        messages.setOnClickListener(v -> {
+            Intent intent = new Intent(Vendor.this, ChatList.class);
+            startActivity(intent);
+        });
+
 
         // Nav username
         TextView navUsername = navigationView.getHeaderView(0).findViewById(R.id.nav_username);
@@ -150,7 +158,6 @@ public class Vendor extends AppCompatActivity {
                     for (DataSnapshot msgSnap : roomSnap.getChildren()){
                         Message msg = msgSnap.getValue(Message.class);
                         if (msg != null && msg.receiverId.equals(currentUser) && !msg.isRead) {
-
                             unreadCount++;
                         }
                     }

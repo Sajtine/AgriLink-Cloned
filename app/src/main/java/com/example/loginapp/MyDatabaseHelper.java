@@ -270,8 +270,6 @@
             return result;
         }
 
-
-
         // Delete User Data
         public void deleteData() {
             SQLiteDatabase db = this.getWritableDatabase();
@@ -562,6 +560,24 @@
             return result > 0;
         }
 
+
+        // vendor checking for info filled up
+        public boolean isVendorInfoComplete(int vendorId){
+            SQLiteDatabase db = this.getReadableDatabase();
+
+            Cursor cursor = db.rawQuery(
+                    "SELECT * FROM " + TABLE_MARKETS +
+                            " WHERE " + COLUMN_MARKET_VENDOR_ID + " = ?" +
+                            " AND " + COLUMN_MARKET_NAME + " IS NOT NULL AND " + COLUMN_MARKET_NAME + " != ''" +
+                            " AND " + COLUMN_MARKET_STREET + " IS NOT NULL AND " + COLUMN_MARKET_STREET + " != ''" +
+                            " AND " + COLUMN_MARKET_BARANGGAY + " IS NOT NULL AND " + COLUMN_MARKET_BARANGGAY + " != ''" +
+                            " AND " + COLUMN_MARKET_MUNICIPALITY + " IS NOT NULL AND " + COLUMN_MARKET_MUNICIPALITY + " != ''",
+                    new String[]{String.valueOf(vendorId)}
+            );
+
+            boolean isComplete = cursor.moveToFirst();
+            return isComplete;
+        }
 
 
     }

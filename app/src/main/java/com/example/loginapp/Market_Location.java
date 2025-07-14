@@ -339,7 +339,9 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
 
                         // Get coordinates
                         double latitude = cursor.getDouble(cursor.getColumnIndexOrThrow("latitude"));
-                        double longitude = cursor.getDouble(cursor.getColumnIndexOrThrow("longitude"));
+                        double longitude = cursor.getDouble(cursor.getColumnIndexOrThrow("long" +
+                                "" +
+                                "itude"));
 
                         final double finalLat = latitude;
                         final double finalLong = longitude;

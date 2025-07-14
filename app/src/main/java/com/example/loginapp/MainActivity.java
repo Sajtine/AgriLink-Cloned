@@ -1,5 +1,6 @@
 package com.example.loginapp;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
@@ -47,8 +48,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-
-
         userEmail = findViewById(R.id.email);
         userPassword = findViewById(R.id.password);
         login = findViewById(R.id.submit);
@@ -68,10 +67,9 @@ public class MainActivity extends AppCompatActivity {
                 startActivity(new Intent(MainActivity.this,Register.class));
             }
         });
-
-
     }
 
+    // Validation
     public void validation() {
 
         databaseHelper = new MyDatabaseHelper(this);
@@ -106,13 +104,29 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(MainActivity.this, "Login Successfully!", Toast.LENGTH_SHORT).show();
             Toast.makeText(MainActivity.this, "Welcome " + username + "!", Toast.LENGTH_SHORT).show();
 
+            int vendorId = Integer.parseInt(userId);
+
             // If vendor, save vendor_id and name to markets table
             if (userRole.equalsIgnoreCase("vendor")) {
+
                 // Check first if already exists to avoid duplicate
                 if (!databaseHelper.isVendorInMarkets(userId)) {
                     databaseHelper.addVendorToMarkets(Integer.parseInt(userId), username);
                 }
-                startActivity(new Intent(MainActivity.this, Vendor.class));
+
+                // Check if the vendor completes the info
+                if(!databaseHelper.isVendorInfoComplete(vendorId)){
+
+                    Intent intent = new Intent(MainActivity.this, Vendor_Info.class);
+                    intent.putExtra("info_complete", false);
+                    startActivity(intent);
+                    finish();
+
+                }else{
+                    startActivity(new Intent(MainActivity.this, Vendor.class));
+                    finish();
+                }
+
             } else if (userRole.equalsIgnoreCase("farmer")) {
                 startActivity(new Intent(MainActivity.this, Home.class));
             } else {
@@ -126,8 +140,6 @@ public class MainActivity extends AppCompatActivity {
 
 
     }
-
-
 
 
 }
