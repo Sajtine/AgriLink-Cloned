@@ -42,7 +42,6 @@ public class Market_Details extends AppCompatActivity {
         TextView baranggay = findViewById(R.id.baranggay);
         TextView phoneNumber = findViewById(R.id.number);
 
-        Log.d("Market id", vendor_id);
 
         marketname.setText(marketName);
         vendorname.setText(vendorName);

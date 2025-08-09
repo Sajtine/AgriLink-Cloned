@@ -9,6 +9,7 @@
     android:padding="24dp"
     tools:context=".Farmers_Details">
 
+    <!-- Title -->
     <TextView
         android:id="@+id/editTitle"
         android:layout_width="wrap_content"
@@ -42,8 +43,6 @@
             android:inputType="textPersonName" />
     </com.google.android.material.textfield.TextInputLayout>
 
-
-
     <!-- Address -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/addressLayout"
@@ -65,6 +64,22 @@
             android:inputType="textPostalAddress" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- 📍 Use Map Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/mapSelection"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="Use Map to Select Address"
+        android:textAllCaps="false"
+        android:textSize="14sp"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/shade2_blue"
+        app:cornerRadius="12dp"
+        app:layout_constraintTop_toBottomOf="@id/addressLayout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="10dp" />
+
     <!-- Phone -->
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/phoneLayout"
@@ -72,7 +87,7 @@
         android:layout_height="wrap_content"
         android:hint="Phone Number"
         app:boxStrokeColor="#1E88E5"
-        app:layout_constraintTop_toBottomOf="@id/addressLayout"
+        app:layout_constraintTop_toBottomOf="@id/mapSelection"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="14dp">
@@ -115,9 +130,9 @@
         android:text="Save Changes"
         android:textAllCaps="false"
         android:textSize="16sp"
-        app:cornerRadius="12dp"
         android:textColor="@color/white"
         android:backgroundTint="@color/shade1_green"
+        app:cornerRadius="12dp"
         app:layout_constraintTop_toBottomOf="@id/emailLayout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

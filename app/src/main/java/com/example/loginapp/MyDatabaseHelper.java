@@ -22,7 +22,7 @@
     public class MyDatabaseHelper extends SQLiteOpenHelper {
 
         private static final String DATABASE_NAME = "AgriLink.db";
-        private static final int DATABASE_VERSION = 21;
+        private static final int DATABASE_VERSION = 23;
 
         // Users Table
         private static final String TABLE_NAME = "users";
@@ -35,15 +35,15 @@
         private static final String COLUMN_PASSWORD = "password";
 
         // Markets Table
-        private static final String TABLE_MARKETS = "markets";  // Corrected table name
+        private static final String TABLE_MARKETS = "markets";
         private static final String COLUMN_MARKET_ID = "id";
         private static final String COLUMN_MARKET_NAME = "name";
         private static final String COLUMN_MARKET_STREET = "street";
-        private static final String COLUMN_MARKET_BARANGGAY = "barangay";  // Corrected spelling
+        private static final String COLUMN_MARKET_BARANGGAY = "barangay";
         private static final String COLUMN_MARKET_PHONE = "phone";
         private static final String COLUMN_MARKET_VENDOR = "vendor";
         private static final String COLUMN_MARKET_VENDOR_ID = "vendor_id";
-        private static final String COLUMN_MARKET_MUNICIPALITY = "municipality"; // Assuming you need this field
+        private static final String COLUMN_MARKET_MUNICIPALITY = "municipality";
         private static final String COLUMN_MARKET_LATITUDE = "latitude";
         private static final String COLUMN_MARKET_LONGITUDE = "longitude";
 
@@ -58,10 +58,11 @@
         private static final String COLUMN_PRODUCT_QUANTITY = "quantity";
         private static final String COLUMN_PRICE = "price";
         private static final String COLUMN_DELIVERY_DATE = "delivery_date";
-        private static final String COLUMN_NOTE = "note";
         private static final String COLUMN_STATUS = "status";
         private static final String COLUMN_REQUEST_DATE = "request_date";
         private static final String COLUMN_RECEIVED_DATE = "received_date";
+        private static final String  COLUMN_PICKUP_OPTION = "pickup_option";
+        private static final String COLUMN_PAYMENT_METHOD = "payment_method";
 
         // Crops Table
         private static final String TABLE_CROPS = "crops";
@@ -129,10 +130,11 @@
                     COLUMN_PRODUCT_QUANTITY + " INTEGER, " +
                     COLUMN_PRICE + " REAL, " +
                     COLUMN_DELIVERY_DATE + " TEXT, " +
-                    COLUMN_NOTE + " TEXT, " +
                     COLUMN_STATUS + " TEXT DEFAULT 'Pending', " +
                     COLUMN_REQUEST_DATE + " TEXT, " +
                     COLUMN_RECEIVED_DATE + " TEXT, " +
+                    COLUMN_PICKUP_OPTION + " TEXT, " +
+                    COLUMN_PAYMENT_METHOD + " TEXT, " +
                     "FOREIGN KEY(" + COLUMN_VENDOR_ID + ") REFERENCES " + TABLE_NAME + "(" + COLUMN_ID + ") ON DELETE CASCADE);";
 
             // Create Crops Table Query
@@ -205,6 +207,8 @@
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_MARKETS);  // Drop markets table if it exists
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_PRODUCT_OFFERS);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_CROPS);
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_VENDOR_PRODUCTS);
             onCreate(db);
         }
 
@@ -299,15 +303,27 @@
         }
 
         // Get Market Details by Municipality (or any other field)
-        public Cursor getMarketDetails(String municipality) {
+        public Cursor getMarketDetails(String municipality, String productFilter) {
             SQLiteDatabase db = this.getReadableDatabase();
-            return db.rawQuery("SELECT * FROM " + TABLE_MARKETS + " WHERE " + COLUMN_MARKET_MUNICIPALITY + "=?", new String[]{municipality});
+
+            if (productFilter.equals("All")){
+                return db.rawQuery(
+                        "SELECT * FROM markets WHERE municipality = ?",
+                        new String[]{municipality}
+                );
+            }else{
+                return db.rawQuery(
+                        "SELECT m.* FROM markets m " +
+                                "JOIN vendor_products vp ON m.vendor_id = vp.vendor_product_id " +
+                                "WHERE m.municipality = ? AND vp.vendor_product_name = ?",
+                        new String[]{municipality, productFilter}
+                );
+            }
         }
 
 
-
         // Method to store request in the db
-        public boolean insertRequest(String product_name, int quantity, double price, String delivery_date, String note, int vendor_id, int farmer_id, String farmer_name, String phone_number, String request_date){
+        public boolean insertRequest(String product_name, int quantity, double price, String delivery_date, int vendor_id, int farmer_id, String farmer_name, String phone_number, String request_date, String pickUpOption, String paymentMethod){
             SQLiteDatabase db = this.getWritableDatabase();
             ContentValues values = new ContentValues();
 
@@ -316,11 +332,12 @@
             values.put("quantity", quantity);
             values.put("price", price);
             values.put("delivery_date", delivery_date);
-            values.put("note", note);
             values.put("farmer_id", farmer_id);
             values.put("farmer_name", farmer_name);
             values.put("farmer_number", phone_number);
             values.put("request_date", request_date);
+            values.put("pickup_option", pickUpOption);
+            values.put("payment_method", paymentMethod);
 
             long result = db.insert(TABLE_PRODUCT_OFFERS, null, values);
             return result != -1;
@@ -421,8 +438,8 @@
                     offer.put("quantity", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_QUANTITY)));
                     offer.put("price", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRICE)));
                     offer.put("delivery_date", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DELIVERY_DATE)));
-                    offer.put("note", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NOTE)));
                     offer.put("status", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATUS)));
+                    offer.put("request_date", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_REQUEST_DATE)));
 
                     // Market Info (from join)
                     offer.put("market_name", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MARKET_NAME)));

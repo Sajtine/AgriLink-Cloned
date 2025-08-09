@@ -2,6 +2,7 @@ package com.example.loginapp;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.ListView;
 import android.widget.SimpleAdapter;
@@ -99,6 +100,12 @@ public class Requests extends AppCompatActivity {
             map.put("market_name", "Market: " + offer.get("market_name"));
             map.put("vendor_barangay", "Barangay: " + offer.get("vendor_barangay"));
             map.put("delivery_date", "Delivery Date: " + offer.get("delivery_date"));
+
+            String requestDate = offer.get("request_date");
+            Log.d("RequestDate", "Request Date: " + requestDate);
+
+            map.put("request_date", "Request Date: " + requestDate);
+
             displayData.add(map);
         }
 
@@ -109,6 +116,7 @@ public class Requests extends AppCompatActivity {
             emptyMap.put("market_name", "");
             emptyMap.put("vendor_barangay", "");
             emptyMap.put("delivery_date", "");
+            emptyMap.put("request_date", "");
             displayData.add(emptyMap);
         }
 
@@ -116,8 +124,8 @@ public class Requests extends AppCompatActivity {
                 this,
                 displayData,
                 R.layout.list_item_request,
-                new String[]{"product_name", "status", "market_name", "vendor_barangay", "delivery_date"},
-                new int[]{R.id.textProductName, R.id.textStatus, R.id.textMarket, R.id.textBarangay, R.id.delivery_date}
+                new String[]{"product_name", "status", "market_name", "vendor_barangay", "delivery_date", "request_date"},
+                new int[]{R.id.textProductName, R.id.textStatus, R.id.textMarket, R.id.textBarangay, R.id.delivery_date, R.id.request_date}
         );
 
         listView.setAdapter(adapter);

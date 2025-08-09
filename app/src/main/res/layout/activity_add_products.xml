@@ -55,7 +55,9 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="16dp"
             android:background="@drawable/spinner_background"
-            android:padding="6dp"/>
+            android:padding="6dp"
+            android:popupBackground="@color/white"/>
+
 
         <!-- Save Button -->
         <Button

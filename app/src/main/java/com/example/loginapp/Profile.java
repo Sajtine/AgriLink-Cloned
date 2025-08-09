@@ -22,8 +22,7 @@ import com.google.android.material.button.MaterialButton;
 
 public class Profile extends AppCompatActivity {
 
-    private TextView log_out;
-    private TextView username;
+    private TextView log_out, username, farmersLocation;
     MyDatabaseHelper databaseHelper;
 
     private boolean isColorDark(int color){
@@ -88,6 +87,7 @@ public class Profile extends AppCompatActivity {
         String userEmail = sharedPreferences.getString("email", null);
 
         username = findViewById(R.id.username);
+        farmersLocation = findViewById(R.id.farmersLocation);
 
         if(userEmail != null){
             getUserDetails(userEmail);
@@ -129,15 +129,6 @@ public class Profile extends AppCompatActivity {
 //        addFragment();
     }
 
-//    public void addFragment(){
-//
-//        Fragment fragment = new MyProfile();
-//        FragmentManager fm = getSupportFragmentManager();
-//        FragmentTransaction ft = fm.beginTransaction();
-//        ft.replace(R.id.frag_container, fragment);
-//        ft.commit();
-//
-//    }
 
     @Override
     public void onResume(){
@@ -153,9 +144,10 @@ public class Profile extends AppCompatActivity {
 
         if(cursor.moveToFirst()){
             String name = cursor.getString(cursor.getColumnIndexOrThrow("username"));
-            String userEmail = cursor.getString(cursor.getColumnIndexOrThrow("email"));
+            String location = cursor.getString(cursor.getColumnIndexOrThrow("address"));
 
             username.setText(name);
+            farmersLocation.setText(location);
         }
 
     }

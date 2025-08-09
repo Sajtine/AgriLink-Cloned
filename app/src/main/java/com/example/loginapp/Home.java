@@ -258,7 +258,7 @@ public class Home extends AppCompatActivity {
 
         SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH);
         SimpleDateFormat onlyDateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
-        SimpleDateFormat dayNameFormat = new SimpleDateFormat("EEEE", Locale.ENGLISH);
+        SimpleDateFormat dayNameFormat = new SimpleDateFormat("EEE", Locale.ENGLISH);
 
         Date currentDate = new Date();
         String todayDateStr = onlyDateFormat.format(currentDate);

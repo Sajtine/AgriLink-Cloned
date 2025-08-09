@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
@@ -9,100 +10,108 @@
     android:fitsSystemWindows="false"
     tools:context=".Market_Location">
 
-
-    <!-- Placeholder for header or banner -->
-
+    <!-- Top Navigation Fragment -->
     <FrameLayout
         android:id="@+id/top_nav_container"
         android:layout_width="match_parent"
         android:layout_height="210dp"
-        app:layout_constraintBottom_toBottomOf="@id/footerLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-
+    <!-- Map Fragment -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="230dp"
-        app:layout_constraintBottom_toTopOf="@id/footerLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintTop_toBottomOf="@id/top_nav_container" />
+
+    <!-- Filter Chips -->
+    <HorizontalScrollView
+        android:id="@+id/filter_scroll"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:scrollbars="none"
+        app:layout_constraintTop_toBottomOf="@id/map"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/top_nav_container"
-        app:layout_constraintVertical_bias="0.0" />
+        app:layout_constraintEnd_toEndOf="parent">
 
+        <LinearLayout
+            android:id="@+id/filter_chip_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp" />
+    </HorizontalScrollView>
 
+    <!-- Content Scrollable Area (cards + retry + loading) -->
     <FrameLayout
         android:id="@+id/scrollContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintTop_toBottomOf="@+id/map"
-        app:layout_constraintBottom_toTopOf="@+id/navigation_bottom"
+        app:layout_constraintTop_toBottomOf="@id/filter_scroll"
+        app:layout_constraintBottom_toTopOf="@id/navigation_bottom"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- ScrollView inside FrameLayout -->
+        <!-- ScrollView for market cards -->
         <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:fillViewport="true">
 
-            <FrameLayout
+            <GridLayout
+                android:id="@+id/gridLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minHeight="450dp">
-
-                <GridLayout
-                    android:id="@+id/gridLayout"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:alignmentMode="alignMargins"
-                    android:columnCount="2"
-                    android:orientation="horizontal"
-                    android:padding="8dp" />
-
-            </FrameLayout>
+                android:columnCount="2"
+                android:padding="6dp"
+                android:horizontalSpacing="8dp"
+                android:verticalSpacing="8dp" />
         </ScrollView>
 
-        <!-- Centered ProgressBar over ScrollView -->
+        <!-- Progress Bar -->
         <ProgressBar
             android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:indeterminateTint="@color/shade1_green"
             android:visibility="gone" />
+
+        <!-- Retry Button -->
+        <Button
+            android:id="@+id/retry_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:backgroundTint="@color/shade1_green"
+            android:text="Retry Location"
+            android:textColor="@color/white"
+            android:paddingHorizontal="24dp"
+            android:visibility="gone" />
     </FrameLayout>
 
-
-
-
+    <!-- Bottom Navigation -->
     <LinearLayout
         android:id="@+id/footerLayout"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@drawable/footer2"
         android:gravity="center"
-        android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/navigation_bottom">
+        app:layout_constraintTop_toTopOf="@id/navigation_bottom"
+        android:orientation="horizontal">
 
-        <!-- Home Icon -->
         <ImageView
             android:id="@+id/home"
             android:layout_width="0dp"
             android:layout_height="23dp"
             android:layout_weight="1"
-            android:contentDescription="Home"
             android:src="@drawable/home" />
 
-        <!-- Location Icon -->
         <ImageView
             android:id="@+id/location"
             android:layout_width="0dp"
@@ -110,23 +119,19 @@
             android:layout_weight="1"
             android:src="@drawable/location2" />
 
-        <!-- Settings Icon -->
         <ImageView
             android:id="@+id/user_profile"
             android:layout_width="0dp"
             android:layout_height="23dp"
             android:layout_weight="1"
-            android:contentDescription="Cart"
             android:src="@drawable/user_profile" />
-
     </LinearLayout>
 
+    <!-- Bottom Navigation Guideline -->
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/navigation_bottom"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.93982494" />
-
-
+        app:layout_constraintGuide_percent="0.94" />
 </androidx.constraintlayout.widget.ConstraintLayout>

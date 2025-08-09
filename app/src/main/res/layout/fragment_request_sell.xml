@@ -2,15 +2,16 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="5dp">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:padding="0dp"
+    android:fillViewport="true"> <!-- Important -->
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="20dp"
-        android:elevation="6dp"
-        android:layout_gravity="center_horizontal">
+        android:layout_gravity="top">
 
         <TextView
             android:id="@+id/title"
@@ -24,7 +25,7 @@
         <EditText
             android:id="@+id/input_product_name"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:hint="Product Name"
             android:inputType="textCapWords"
             android:layout_marginBottom="12dp"/>
@@ -32,7 +33,7 @@
         <EditText
             android:id="@+id/input_quantity"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:hint="Quantity (e.g., 1 kg)"
             android:inputType="textCapWords"
             android:layout_marginBottom="12dp"/>
@@ -40,7 +41,7 @@
         <EditText
             android:id="@+id/input_price"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:hint="Price per kg"
             android:inputType="numberDecimal"
             android:layout_marginBottom="12dp"/>
@@ -48,24 +49,56 @@
         <EditText
             android:id="@+id/input_delivery_date"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="48dp"
             android:hint="Delivery Date"
             android:focusable="false"
             android:clickable="true"
             android:layout_marginBottom="20dp"
             android:inputType="none" />
 
-        <EditText
-            android:id="@+id/input_notes"
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pickup Option"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <RadioGroup
+            android:id="@+id/pickup_option_group"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Additional Notes (optional)"
-            android:inputType="textMultiLine"
-            android:minLines="3"
-            android:gravity="top"
+            android:orientation="vertical"
+            android:layout_marginBottom="20dp">
+
+            <RadioButton
+                android:id="@+id/option_vendor_pickup"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Vendor will pick up the product" />
+
+            <RadioButton
+                android:id="@+id/option_farmer_delivery"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Farmer will deliver the product" />
+        </RadioGroup>
+
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Payment Method"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/payment_method"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
             android:layout_marginBottom="20dp"/>
 
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/submit_request"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -73,7 +106,9 @@
             android:textAllCaps="false"
             android:textColor="@android:color/white"
             android:backgroundTint="@color/shade1_green"
-            android:padding="12dp" />
+            app:cornerRadius="8dp"
+            android:elevation="4dp"
+            style="@style/Widget.MaterialComponents.Button" />
     </LinearLayout>
 
 </ScrollView>
