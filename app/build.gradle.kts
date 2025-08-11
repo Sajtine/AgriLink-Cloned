@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.loginapp"
+    namespace = "com.example.loginappclone"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.loginapp"
+        applicationId = "com.example.loginappclone"
         minSdk = 26
         targetSdk = 34
         versionCode = 1
@@ -59,6 +59,7 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     implementation(libs.mpandroidchart);
+    implementation("com.google.firebase:firebase-auth:21.0.1")
 
 
 

@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "357061484246",
+    "firebase_url": "https://agrilink-app-default-rtdb.firebaseio.com",
     "project_id": "agrilink-app",
     "storage_bucket": "agrilink-app.firebasestorage.app"
   },
@@ -10,6 +11,25 @@
         "mobilesdk_app_id": "1:357061484246:android:9c5055ab54768388877377",
         "android_client_info": {
           "package_name": "com.example.loginapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCVih-nqyFmRDL8VNTuNdCpVuImHZ8k0xk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:357061484246:android:72a552c50584e2aa877377",
+        "android_client_info": {
+          "package_name": "com.example.loginappclone"
         }
       },
       "oauth_client": [],

@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">AgriLink</string>
+    <string name="app_name">AgriLink Clone</string>
 
     <string-array name="user_types">
         <item>Select user type</item>

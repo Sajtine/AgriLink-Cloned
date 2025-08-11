@@ -17,4 +17,6 @@
     <color name="shade2_blue">#2196F3</color>
     <color name="navigationShadowColor">#E0E0E0</color> <!-- Light gray shadow -->
     <color name="navigationBackgroundColor">#FFFFFF</color> <!-- White background or any color you choose -->
+    <color name="blue">#2196F3</color>  <!-- example nice blue -->
+
 </resources>
