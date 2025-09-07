@@ -11,9 +11,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
-public class Register extends AppCompatActivity{
+public class Register extends AppCompatActivity {
 
-    private EditText reg_username, reg_email, reg_password, check_password;
+    private EditText reg_username, reg_phoneNumber;
+    private Spinner userType;
     MyDatabaseHelper databaseHelper;
 
     @Override
@@ -27,61 +28,32 @@ public class Register extends AppCompatActivity{
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
-
+        // Initialize fields
         reg_username = findViewById(R.id.username);
-        reg_email = findViewById(R.id.email);
-        reg_password = findViewById(R.id.password);
-        check_password = findViewById(R.id.confirmPassword);
-
+        reg_phoneNumber = findViewById(R.id.phone);
+        userType = findViewById(R.id.userTypeSpinner);
 
         Button register = findViewById(R.id.submit);
         TextView userLogin = findViewById(R.id.user_login);
 
-        register.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                getUserInfo();
-            }
-        });
+        register.setOnClickListener(v -> getUserInfo());
 
-
-        userLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(Register.this,MainActivity.class));
-            }
-        });
-
+        userLogin.setOnClickListener(v ->
+                startActivity(new Intent(Register.this, MainActivity.class)));
     }
-
 
     // Register User
-    public void getUserInfo(){
-
-        String username = reg_username.getText().toString();
-        String password = reg_password.getText().toString();
-        String email = reg_email.getText().toString();
-        String checkPass = check_password.getText().toString();
-
-        Spinner userType= findViewById(R.id.userTypeSpinner); // move here!
+    public void getUserInfo() {
+        String username = reg_username.getText().toString().trim();
+        String phoneNumber = reg_phoneNumber.getText().toString().trim();
         String selectedRole = userType.getSelectedItem().toString();
 
-        if(username.isEmpty() || password.isEmpty() || email.isEmpty() || checkPass.isEmpty() || selectedRole.equals("Select user type")){
-            Toast.makeText(Register.this, "Please fill up all fields including user type!", Toast.LENGTH_SHORT).show();
+        if (username.isEmpty() || phoneNumber.isEmpty() || selectedRole.equals("Select user type")) {
+            Toast.makeText(this, "Please fill up all fields including user type!", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        if(!password.equals(checkPass)) {
-            Toast.makeText(Register.this, "Password doesn't match. Please re-enter password.", Toast.LENGTH_SHORT).show();
-            check_password.setText("");
-            return;
-        }
-
-
-        // Check email in Firebase before registration
-        databaseHelper.registerUser(username, email, password, selectedRole, Register.this);
-
-
+        // Save user in Firebase
+        databaseHelper.registerUser(username, phoneNumber, selectedRole, this);
     }
-
 }

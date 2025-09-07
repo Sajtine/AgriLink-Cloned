@@ -1,7 +1,5 @@
 package com.example.loginappclone;
 
-import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,7 +9,15 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -24,8 +30,9 @@ public class Accepted_Products extends AppCompatActivity {
     ListView approvedOffersListView;
     TextView noOffersMessage;
     ArrayList<HashMap<String, String>> approvedOfferList;
-    MyDatabaseHelper dbHelper;
-    boolean hasApprovedOffers = false;
+    DatabaseReference dbRef;
+    String currentVendorUID;
+    SimpleAdapter adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,13 +40,65 @@ public class Accepted_Products extends AppCompatActivity {
         setContentView(R.layout.accepted_products);
 
         approvedOffersListView = findViewById(R.id.approvedOffersListView);
-        noOffersMessage = findViewById(R.id.noOffersMessage); // Reference to the message view
-        dbHelper = new MyDatabaseHelper(this);
+        noOffersMessage = findViewById(R.id.noOffersMessage);
         approvedOfferList = new ArrayList<>();
 
-        loadApprovedOffers();
+        dbRef = FirebaseDatabase.getInstance().getReference("requests");
+        currentVendorUID = FirebaseAuth.getInstance().getCurrentUser().getUid(); // vendor UID
 
-        SimpleAdapter adapter = new SimpleAdapter(
+        setupAdapter();
+        loadApprovedOffers(); // Start listening for Firebase updates
+    }
+
+    private void loadApprovedOffers() {
+        dbRef.child(currentVendorUID)
+                .addValueEventListener(new ValueEventListener() {  // 🔄 realtime listener
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        approvedOfferList.clear();
+
+                        if (snapshot.exists()) {
+                            for (DataSnapshot offerSnap : snapshot.getChildren()) {
+                                String status = offerSnap.child("status").getValue(String.class);
+
+                                if ("Accepted".equalsIgnoreCase(status)) {
+                                    HashMap<String, String> map = new HashMap<>();
+                                    map.put("id", offerSnap.getKey()); // Firebase push ID
+                                    map.put("farmer", "👨‍🌾 " + offerSnap.child("farmerName").getValue(String.class));
+                                    map.put("product", "Product: " + offerSnap.child("productName").getValue(String.class));
+                                    map.put("price", "Price: ₱" + offerSnap.child("price").getValue(Integer.class) + " / kilo");
+                                    map.put("quantity", "Quantity: " + offerSnap.child("quantity").getValue(Integer.class) + " kilos");
+                                    map.put("delivery", "Delivery: " + offerSnap.child("deliveryDate").getValue(String.class));
+                                    map.put("status", status);
+
+                                    approvedOfferList.add(map);
+                                }
+                            }
+
+                            adapter.notifyDataSetChanged();
+
+                            // ✅ Show "No Accepted Products" if none were found
+                            if (approvedOfferList.isEmpty()) {
+                                noOffersMessage.setText("No Accepted Products at the moment.");
+                                noOffersMessage.setVisibility(View.VISIBLE);
+                            } else {
+                                noOffersMessage.setVisibility(View.GONE);
+                            }
+                        } else {
+                            noOffersMessage.setText("No Accepted Products at the moment.");
+                            noOffersMessage.setVisibility(View.VISIBLE);
+                        }
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(Accepted_Products.this, "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void setupAdapter() {
+        adapter = new SimpleAdapter(
                 this,
                 approvedOfferList,
                 R.layout.approved_offer_item,
@@ -70,15 +129,12 @@ public class Accepted_Products extends AppCompatActivity {
                     }
                 }
 
-                btnReceived.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String productName = approvedOfferList.get(position).get("product");
-                        updateOfferStatusToReceived(position);
-                        loadApprovedOffers(); // Refresh data
-                        ((SimpleAdapter) approvedOffersListView.getAdapter()).notifyDataSetChanged(); // Refresh UI
-                        Toast.makeText(Accepted_Products.this, "Offer marked as received for " + productName, Toast.LENGTH_SHORT).show();
-                    }
+                btnReceived.setOnClickListener(v -> {
+                    String offerId = approvedOfferList.get(position).get("id");
+                    String productName = approvedOfferList.get(position).get("product");
+
+                    updateOfferStatusToReceived(offerId);
+                    Toast.makeText(Accepted_Products.this, "Offer marked as received for " + productName, Toast.LENGTH_SHORT).show();
                 });
 
                 return view;
@@ -88,42 +144,9 @@ public class Accepted_Products extends AppCompatActivity {
         approvedOffersListView.setAdapter(adapter);
     }
 
-    private void loadApprovedOffers() {
-        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
-        int vendorId = Integer.parseInt(sharedPreferences.getString("userId", "0"));
-
-        Cursor cursor = dbHelper.getApprovedOffersByVendor(vendorId);
-        approvedOfferList.clear();
-        hasApprovedOffers = false;
-
-        if (cursor != null && cursor.moveToFirst()) {
-            hasApprovedOffers = true;
-            noOffersMessage.setVisibility(View.GONE); // Hide the "no offers" message
-
-            do {
-                HashMap<String, String> map = new HashMap<>();
-                map.put("id", String.valueOf(cursor.getInt(cursor.getColumnIndexOrThrow("id"))));
-                map.put("farmer", "👨‍🌾 " + cursor.getString(cursor.getColumnIndexOrThrow("farmer_name")));
-                map.put("product", "Product: " + cursor.getString(cursor.getColumnIndexOrThrow("product_name")));
-                map.put("price", "Price: ₱" + cursor.getString(cursor.getColumnIndexOrThrow("price")) + " / kilo");
-                map.put("quantity", "Quantity: " + cursor.getString(cursor.getColumnIndexOrThrow("quantity")) + " kilos");
-                map.put("delivery", "Delivery: " + cursor.getString(cursor.getColumnIndexOrThrow("delivery_date")));
-                map.put("status", cursor.getString(cursor.getColumnIndexOrThrow("status")));
-                approvedOfferList.add(map);
-            } while (cursor.moveToNext());
-
-            cursor.close();
-        } else {
-            noOffersMessage.setVisibility(View.VISIBLE); // Show "no offers" message
-        }
-    }
-
-    private void updateOfferStatusToReceived(int position) {
-        int offerId = Integer.parseInt(approvedOfferList.get(position).get("id"));
-
-        SimpleDateFormat sdf  = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        String currentDate = sdf.format(new Date());
-
-        dbHelper.markOfferAsReceived(offerId, currentDate);
+    private void updateOfferStatusToReceived(String offerId) {
+        String currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
+        dbRef.child(currentVendorUID).child(offerId).child("status").setValue("Received");
+        dbRef.child(currentVendorUID).child(offerId).child("receivedDate").setValue(currentDate);
     }
 }

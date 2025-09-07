@@ -1,5 +1,6 @@
     package com.example.loginappclone;
 
+    import android.app.Activity;
     import android.content.ContentValues;
     import android.content.Context;
     import android.content.Intent;
@@ -7,7 +8,6 @@
     import android.database.Cursor;
     import android.database.sqlite.SQLiteDatabase;
     import android.database.sqlite.SQLiteOpenHelper;
-    import android.util.Log;
     import android.widget.Toast;
 
     import com.google.firebase.auth.FirebaseAuth;
@@ -216,41 +216,39 @@
 //        -------------------------------------- Firebase Functions --------------------------------------------
 
         // Register User with Firebase
-        public void registerUser(String username, String email, String password, String userRole, Context context) {
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-
-            auth.createUserWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            // Get Firebase UID
-                            String uid = auth.getCurrentUser().getUid();
-
-                            // Save additional user info to Realtime DB
-                            saveUserData(uid, username, email, userRole, context);
-
-                            // Will direct the user to log in page
-                            Intent intent =  new Intent(context, MainActivity.class);
-                            context.startActivity(intent);
-
-                        } else {
-                            Toast.makeText(context, "Registration failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        }
-
         // Save user data in the firebase
-        private void saveUserData(String uid, String username, String email, String userRole, Context context) {
+        public void registerUser(String username, String phoneNumber, String userRole, Context context) {
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             String rolePath = userRole.equalsIgnoreCase("farmer") ? "farmers" : "vendors";
+
+            String formattedNumber = phoneNumber;
+
+            if(phoneNumber.startsWith("0")){
+                formattedNumber = "+63" + phoneNumber.substring(1);
+            }else if(!phoneNumber.startsWith("+63")){
+                formattedNumber = "+63" + phoneNumber;
+            }
+
+            String uid = formattedNumber;
+
             DatabaseReference userRef = database.getReference("users").child(rolePath).child(uid);
 
             Map<String, Object> userData = new HashMap<>();
             userData.put("username", username);
-            userData.put("email", email);
+            userData.put("phone_number", formattedNumber);
             userData.put("userRole", userRole.toLowerCase());
 
             userRef.setValue(userData)
-                    .addOnSuccessListener(aVoid -> Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show())
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show();
+
+                        Intent intent = new Intent(context, MainActivity.class);
+                        context.startActivity(intent);
+
+                        if (context instanceof Activity) {
+                            ((Activity) context).finish();
+                        }
+                    })
                     .addOnFailureListener(e -> Toast.makeText(context, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show());
         }
 
@@ -283,7 +281,7 @@
                                 fetchUserInfoAndNavigate(uid, context);
                             }
                         } else {
-                            Toast.makeText(context, "Login failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, "Incorrect email or password", Toast.LENGTH_SHORT).show();
                         }
                     });
         }
@@ -295,7 +293,7 @@
 
             userRefFarmers.get().addOnCompleteListener(task -> {
                 if (task.isSuccessful() && task.getResult().exists()) {
-                    // Farmer found
+                    // Farmer found, proceed as usual...
                     Map<String, Object> userData = (Map<String, Object>) task.getResult().getValue();
                     String username = (String) userData.get("username");
                     String userRole = (String) userData.get("userRole");
@@ -303,12 +301,11 @@
                     saveUserSession(uid, username, userRole, context);
                     Toast.makeText(context, "Welcome back, " + username, Toast.LENGTH_SHORT).show();
 
-                    // Navigate to farmer home
                     Intent intent = new Intent(context, Home.class);
                     context.startActivity(intent);
 
                 } else {
-                    // Not found in farmers, check vendors
+                    // Not farmer, check vendors
                     DatabaseReference userRefVendors = FirebaseDatabase.getInstance()
                             .getReference("users/vendors").child(uid);
 
@@ -321,9 +318,29 @@
                             saveUserSession(uid, username, userRole, context);
                             Toast.makeText(context, "Welcome back, " + username, Toast.LENGTH_SHORT).show();
 
-                            // Navigate to vendor home or check info
-                            Intent intent = new Intent(context, Vendor.class);
-                            context.startActivity(intent);
+                            // Now check markets node for infoComplete flag
+                            DatabaseReference marketRef = FirebaseDatabase.getInstance()
+                                    .getReference("markets").child(uid);
+
+                            marketRef.get().addOnCompleteListener(marketTask -> {
+                                if (marketTask.isSuccessful() && marketTask.getResult().exists()) {
+                                    Boolean infoComplete = marketTask.getResult().child("infoComplete").getValue(Boolean.class);
+                                    if (infoComplete != null && infoComplete) {
+                                        // Info complete → proceed to Vendor main screen
+                                        Intent intent = new Intent(context, Vendor.class);
+                                        context.startActivity(intent);
+                                    } else {
+                                        // Info incomplete → redirect to Vendor_Info activity
+                                        Intent intent = new Intent(context, Vendor_Info.class);
+                                        context.startActivity(intent);
+                                    }
+                                } else {
+                                    // markets node missing or error, treat as incomplete
+                                    Intent intent = new Intent(context, Vendor_Info.class);
+                                    intent.putExtra("info_complete", false);
+                                    context.startActivity(intent);
+                                }
+                            });
 
                         } else {
                             Toast.makeText(context, "User data not found", Toast.LENGTH_SHORT).show();

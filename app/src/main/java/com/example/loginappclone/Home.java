@@ -434,6 +434,15 @@ public class Home extends AppCompatActivity {
                     case "kamote":
                         cropImage.setImageResource(R.drawable.kamote);
                         break;
+                    case "rice":
+                        cropImage.setImageResource(R.drawable.rice);
+                        break;
+                    case "cassava":
+                        cropImage.setImageResource(R.drawable.cassava);
+                        break;
+                    case "chayote":
+                        cropImage.setImageResource(R.drawable.chayote);
+                        break;
                     default:
                         cropImage.setImageResource(R.drawable.temp);
                         break;

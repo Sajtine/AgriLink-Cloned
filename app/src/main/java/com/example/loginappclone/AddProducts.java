@@ -8,23 +8,41 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class AddProducts extends AppCompatActivity {
 
     SharedPreferences sharedPreferences;
-    MyDatabaseHelper myDB;
+    DatabaseReference vendorProductsRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_products);
 
-        myDB = new MyDatabaseHelper(this);
         sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+
+        // Firebase reference for vendor_products
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            String vendorUID = currentUser.getUid();
+            vendorProductsRef = FirebaseDatabase.getInstance().getReference("vendor_products").child(vendorUID);
+        } else {
+            Toast.makeText(this, "Not logged in!", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
         // Product Details
         EditText productName = findViewById(R.id.productName);
@@ -45,33 +63,48 @@ public class AddProducts extends AppCompatActivity {
         Button saveProducts = findViewById(R.id.btnSaveProduct);
         saveProducts.setOnClickListener(view -> {
 
-            String product_name = productName.getText().toString();
-            String priceText = productPrice.getText().toString();
+            String product_name = productName.getText().toString().trim();
+            String priceText = productPrice.getText().toString().trim();
             String unit = unitSpinner.getSelectedItem().toString();
-            String userId = sharedPreferences.getString("userId", null);
-            int vendor_id = Integer.parseInt(userId);
 
             // Check if all fields are filled
-            if (product_name.isEmpty() || priceText.isEmpty() || userId == null) {
+            if (product_name.isEmpty() || priceText.isEmpty()) {
                 Toast.makeText(getApplicationContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
-                return; // Stop further execution
+                return;
             }
 
-            // Convert price to double
-            double price = Double.parseDouble(priceText);
+            // Convert price to integer (since you said price is Integer in Firebase)
+            int price;
+            try {
+                price = Integer.parseInt(priceText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(getApplicationContext(), "Invalid price format", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            // Add the product
-            boolean isInserted = myDB.addVendorProducts(product_name, price, unit, vendor_id);
+            // Generate a unique product ID in Firebase
+            String productId = vendorProductsRef.push().getKey();
 
-            if (isInserted) {
-                Toast.makeText(getApplicationContext(), "Product added successfully", Toast.LENGTH_SHORT).show();
-                productName.setText("");
-                productPrice.setText("");
-            } else {
-                Toast.makeText(getApplicationContext(), "Product already exist!", Toast.LENGTH_SHORT).show();
+            // Create product map
+            Map<String, Object> productData = new HashMap<>();
+            productData.put("vendor_product_id", productId);
+            productData.put("vendor_product_name", product_name);
+            productData.put("vendor_product_price", price); // stored as Integer
+            productData.put("product_unit", unit);
+
+            // Save to Firebase
+            if (productId != null) {
+                vendorProductsRef.child(productId).setValue(productData)
+                        .addOnCompleteListener(task -> {
+                            if (task.isSuccessful()) {
+                                Toast.makeText(getApplicationContext(), "Product added successfully", Toast.LENGTH_SHORT).show();
+                                productName.setText("");
+                                productPrice.setText("");
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Failed to add product", Toast.LENGTH_SHORT).show();
+                            }
+                        });
             }
         });
-
-
     }
 }

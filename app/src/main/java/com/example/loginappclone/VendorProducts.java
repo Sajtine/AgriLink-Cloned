@@ -1,6 +1,5 @@
 package com.example.loginappclone;
 
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -11,22 +10,31 @@ import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class VendorProducts extends AppCompatActivity {
 
-    SharedPreferences sharedPreferences;
-    MyDatabaseHelper databaseHelper;
-    
     ListView listViewProducts;
     ArrayAdapter<String> adapter;
     ArrayList<String> productList;
-    int vendorId;
+
+    DatabaseReference vendorProductsRef;
+    String vendorUID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,27 +42,57 @@ public class VendorProducts extends AppCompatActivity {
         setContentView(R.layout.vendor_products);
 
         listViewProducts = findViewById(R.id.listViewProducts);
-        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
-        databaseHelper = new MyDatabaseHelper(this);
-        vendorId = Integer.parseInt(sharedPreferences.getString("userId", null));
 
-        productList = databaseHelper.getVendorProducts(vendorId);
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(this, "Not logged in!", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
 
+        vendorUID = currentUser.getUid();
+        vendorProductsRef = FirebaseDatabase.getInstance().getReference("vendor_products").child(vendorUID);
+
+        productList = new ArrayList<>();
         adapter = new ArrayAdapter<>(this, R.layout.spinner_item, productList);
         listViewProducts.setAdapter(adapter);
 
+        loadProducts();
+
         listViewProducts.setOnItemClickListener((parent, view, position, id) -> {
             String selectedItem = productList.get(position);
-            // You can use dialog here to update or delete
             showEditDeleteDialog(selectedItem);
         });
 
-        // Button Back
+        // Back button
         ImageButton back = findViewById(R.id.btnBack);
-        back.setOnClickListener(v -> {
-            finish();
-        });
+        back.setOnClickListener(v -> finish());
+    }
 
+    private void loadProducts() {
+        vendorProductsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                productList.clear();
+
+                for (DataSnapshot productSnap : snapshot.getChildren()) {
+                    String name = productSnap.child("vendor_product_name").getValue(String.class);
+                    Integer price = productSnap.child("vendor_product_price").getValue(Integer.class);
+                    String unit = productSnap.child("product_unit").getValue(String.class);
+
+                    if (name != null && price != null && unit != null) {
+                        productList.add(name + " - ₱" + price + "/" + unit);
+                    }
+                }
+
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(VendorProducts.this, "Error loading products", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void showEditDeleteDialog(String selectedItem) {
@@ -64,34 +102,41 @@ public class VendorProducts extends AppCompatActivity {
                     if (which == 0) {
                         showUpdateDialog(selectedItem);
                     } else {
-
-                        String productName = selectedItem.split(" - ₱")[0];
-
-                        new AlertDialog.Builder(this)
-                                .setTitle("Delete Product")
-                                .setMessage("Are you sure you want to delete the product: " + productName + "?")
-                                .setPositiveButton("Yes", (confirmDialog, i) -> {
-                                    boolean isDeleted = databaseHelper.deleteVendorProduct(vendorId, selectedItem.split(" - ₱")[0]);
-                                    if (isDeleted) {
-                                        productList.clear();
-                                        productList.addAll(databaseHelper.getVendorProducts(vendorId));
-                                        adapter.notifyDataSetChanged();
-                                        Toast.makeText(this, "Product deleted!", Toast.LENGTH_SHORT).show();
-                                    } else {
-                                        Toast.makeText(this, "Failed to delete product.", Toast.LENGTH_SHORT).show();
-                                    }
-                                })
-                                .setNegativeButton("No", null)
-                                .show();
+                        deleteProduct(selectedItem);
                     }
                 });
         builder.show();
     }
 
+    private void deleteProduct(String selectedItem) {
+        String productName = selectedItem.split(" - ₱")[0];
 
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Product")
+                .setMessage("Are you sure you want to delete: " + productName + "?")
+                .setPositiveButton("Yes", (confirmDialog, i) -> {
+                    vendorProductsRef.orderByChild("vendor_product_name").equalTo(productName)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    for (DataSnapshot productSnap : snapshot.getChildren()) {
+                                        productSnap.getRef().removeValue();
+                                    }
+                                    Toast.makeText(VendorProducts.this, "Product deleted!", Toast.LENGTH_SHORT).show();
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {
+                                    Toast.makeText(VendorProducts.this, "Failed to delete", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                })
+                .setNegativeButton("No", null)
+                .show();
+    }
 
     private void showUpdateDialog(String selectedItem) {
-        // Split selected product info assuming format: Name - ₱Price/Unit
+        // Split format: Name - ₱Price/Unit
         String[] parts = selectedItem.split(" - ₱|/");
         String currentName = parts[0];
         String currentPrice = parts[1];
@@ -106,11 +151,9 @@ public class VendorProducts extends AppCompatActivity {
         Spinner unitSpinner = view.findViewById(R.id.spinnerUnit);
         Button saveButton = view.findViewById(R.id.btnSaveProduct);
 
-        // Set current values
         nameEditText.setText(currentName);
         priceEditText.setText(currentPrice);
 
-        // Basic unit options added directly here
         List<String> units = new ArrayList<>();
         units.add("kg");
         units.add("bunches");
@@ -120,7 +163,6 @@ public class VendorProducts extends AppCompatActivity {
         unitAdapter.setDropDownViewResource(R.layout.spinner_item);
         unitSpinner.setAdapter(unitAdapter);
 
-        // Set the selected unit properly
         int unitPosition = unitAdapter.getPosition(currentUnit.trim());
         unitSpinner.setSelection(unitPosition);
 
@@ -129,27 +171,44 @@ public class VendorProducts extends AppCompatActivity {
 
         saveButton.setOnClickListener(v -> {
             String newName = nameEditText.getText().toString().trim();
-            String newPrice = priceEditText.getText().toString().trim();
+            String newPriceText = priceEditText.getText().toString().trim();
             String newUnit = unitSpinner.getSelectedItem().toString();
 
-            // Update in database
-            boolean isUpdated = databaseHelper.updateVendorProduct(vendorId, currentName, newName, newPrice, newUnit);
-
-            if(isUpdated){
-                Toast.makeText(VendorProducts.this, "Product updated successfully!", Toast.LENGTH_SHORT).show();
-
-                // Refresh list
-                productList.clear();
-                productList.addAll(databaseHelper.getVendorProducts(vendorId));
-                adapter.notifyDataSetChanged();
-            }else{
-                Toast.makeText(VendorProducts.this, "Failed to update product.", Toast.LENGTH_SHORT).show();
+            if (newName.isEmpty() || newPriceText.isEmpty()) {
+                Toast.makeText(this, "All fields required", Toast.LENGTH_SHORT).show();
+                return;
             }
 
+            int newPrice;
+            try {
+                newPrice = Integer.parseInt(newPriceText);
+            } catch (NumberFormatException e) {
+                Toast.makeText(this, "Invalid price", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            vendorProductsRef.orderByChild("vendor_product_name").equalTo(currentName)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            for (DataSnapshot productSnap : snapshot.getChildren()) {
+                                Map<String, Object> updates = new HashMap<>();
+                                updates.put("vendor_product_name", newName);
+                                updates.put("vendor_product_price", newPrice);
+                                updates.put("product_unit", newUnit);
+
+                                productSnap.getRef().updateChildren(updates);
+                            }
+                            Toast.makeText(VendorProducts.this, "Product updated!", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Toast.makeText(VendorProducts.this, "Failed to update", Toast.LENGTH_SHORT).show();
+                        }
+                    });
 
             dialog.dismiss();
         });
     }
-
-
 }

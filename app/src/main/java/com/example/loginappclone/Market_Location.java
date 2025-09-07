@@ -147,8 +147,6 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                 // Call market filter again with current municipality and selected filter
                 getMarket(currentMunicipality, productFilter);
 
-                // Optional: Show selection
-                Toast.makeText(this, "Selected: " + filter, Toast.LENGTH_SHORT).show();
             });
 
 
@@ -345,21 +343,22 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                         gridLayout.setColumnCount(2);
 
                         if (!snapshot.exists()) {
-                            Toast.makeText(Market_Location.this, "No markets found for " + municipality, Toast.LENGTH_SHORT).show();
+                            Toast.makeText(Market_Location.this,
+                                    "No markets found for " + municipality, Toast.LENGTH_SHORT).show();
                             retryButton.setVisibility(View.VISIBLE);
                             return;
                         }
 
                         int index = 0;
+                        final int[] matchedMarkets = {0}; // Track number of markets matching the product
+
                         for (DataSnapshot marketSnap : snapshot.getChildren()) {
                             String marketName = marketSnap.child("marketName").getValue(String.class);
                             String barangay = marketSnap.child("barangay").getValue(String.class);
-                            String phone_number = marketSnap.child("phone").getValue(String.class);
-                            String vendorEmail = marketSnap.getKey();
-                            String normalizedEmail = vendorEmail.replace(".", ",");
-                            Double latitude = null;
-                            Double longitude = null;
+                            String phone_number = marketSnap.child("phoneNumber").getValue(String.class);
+                            String vendorUID = marketSnap.getKey();
 
+                            Double latitude, longitude;
                             try {
                                 latitude = Double.parseDouble(marketSnap.child("latitude").getValue().toString());
                                 longitude = Double.parseDouble(marketSnap.child("longitude").getValue().toString());
@@ -375,120 +374,48 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.market_logo)));
                             markerList.add(marketMarker);
 
-                            CardView cardView = new CardView(Market_Location.this);
-                            GridLayout.LayoutParams params = new GridLayout.LayoutParams();
-                            params.width = (int) (getResources().getDisplayMetrics().widthPixels / 2.2);
-                            params.height = GridLayout.LayoutParams.WRAP_CONTENT;
+                            DatabaseReference vendorProductsRef = FirebaseDatabase.getInstance()
+                                    .getReference("vendor_products")
+                                    .child(vendorUID);
 
-                            int leftRightMargin = dpToPx(4);
-                            int topBottomMargin = dpToPx(8);
+                            int finalIndex = index;
+                            vendorProductsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot productsSnapshot) {
+                                    boolean hasProduct = productFilter.equals("All");
 
-                            if (index % 2 == 0) {
-                                params.setMargins(dpToPx(8), topBottomMargin, leftRightMargin, topBottomMargin);
-                            } else {
-                                params.setMargins(leftRightMargin, topBottomMargin, dpToPx(8), topBottomMargin);
-                            }
-
-                            cardView.setLayoutParams(params);
-                            cardView.setCardBackgroundColor(ContextCompat.getColor(Market_Location.this, R.color.shade1_green));
-                            cardView.setRadius(24f);
-                            cardView.setCardElevation(12f);
-                            cardView.setUseCompatPadding(true);
-
-                            LinearLayout linearLayout = new LinearLayout(Market_Location.this);
-                            linearLayout.setOrientation(LinearLayout.VERTICAL);
-                            linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
-                                    LinearLayout.LayoutParams.MATCH_PARENT,
-                                    LinearLayout.LayoutParams.WRAP_CONTENT));
-                            linearLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
-
-                            // Create placeholder for vendorTextView - will update after vendor fetch
-                            TextView vendorTextView = createTextView("Loading vendor...", 20, true);
-                            linearLayout.addView(vendorTextView);
-
-                            TextView marketTextView = createTextView("Market: " + marketName, 15, false);
-                            TextView barangayTextView = createTextView("Brgy: " + barangay, 15, false);
-
-                            Location userLoc = new Location("");
-                            userLoc.setLatitude(userLat);
-                            userLoc.setLongitude(userLong);
-                            Location marketLoc = new Location("");
-                            marketLoc.setLatitude(latitude);
-                            marketLoc.setLongitude(longitude);
-
-                            float distance = userLoc.distanceTo(marketLoc) / 1000;
-                            TextView distanceTextView = createTextView("Distance: " + String.format("%.2f", distance) + " km", 15, false);
-                            distanceTextView.setPadding(0, 0, 0, dpToPx(12));
-
-                            Button detailsButton = new Button(Market_Location.this);
-                            detailsButton.setText("DETAILS");
-                            detailsButton.setTextSize(12);
-                            detailsButton.setTextColor(Color.WHITE);
-                            LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
-                                    LinearLayout.LayoutParams.WRAP_CONTENT,
-                                    dpToPx(36));
-                            btnParams.gravity = Gravity.START;
-                            btnParams.topMargin = dpToPx(8);
-                            detailsButton.setLayoutParams(btnParams);
-
-                            Double finalLatitude = latitude;
-                            Double finalLongitude = longitude;
-
-                            detailsButton.setOnClickListener(v -> {
-                                Intent intent = new Intent(Market_Location.this, Market_Details.class);
-                                intent.putExtra("marketName", marketName);
-                                intent.putExtra("vendorName", vendorTextView.getText().toString());  // Use updated vendor name
-                                intent.putExtra("vendorEmail", vendorEmail);
-                                intent.putExtra("barangay", barangay);
-                                intent.putExtra("phone", phone_number);
-                                intent.putExtra("latitude", finalLatitude);
-                                intent.putExtra("longitude", finalLongitude);
-                                startActivity(intent);
-                            });
-
-                            linearLayout.addView(marketTextView);
-                            linearLayout.addView(barangayTextView);
-                            linearLayout.addView(distanceTextView);
-                            linearLayout.addView(detailsButton);
-                            cardView.addView(linearLayout);
-                            gridLayout.addView(cardView);
-
-                            cardView.setOnClickListener(v -> {
-                                if (gmap != null) {
-                                    gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(marketLocation, 16));
-                                    if (marketMarker != null) marketMarker.showInfoWindow();
-                                }
-                            });
-
-                            // Fetch vendor name from users/vendors node by vendor_id asynchronously
-                            if (vendorEmail != null && !vendorEmail.isEmpty()) {
-                                DatabaseReference vendorRef = FirebaseDatabase.getInstance()
-                                        .getReference("users/vendors").child(vendorEmail);
-
-                                vendorRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                                    @Override
-                                    public void onDataChange(@NonNull DataSnapshot vendorSnapshot) {
-                                        if (vendorSnapshot.exists()) {
-                                            String vendorNameFetched = vendorSnapshot.child("userName").getValue(String.class);
-                                            if (vendorNameFetched != null && !vendorNameFetched.isEmpty()) {
-                                                vendorTextView.setText("👤 " + vendorNameFetched);
-                                            } else {
-                                                vendorTextView.setText("👤 Vendor");
+                                    if (!hasProduct) {
+                                        for (DataSnapshot productSnap : productsSnapshot.getChildren()) {
+                                            String productName = productSnap.child("vendor_product_name").getValue(String.class);
+                                            if (productName != null && productName.equalsIgnoreCase(productFilter)) {
+                                                hasProduct = true;
+                                                break;
                                             }
-                                        } else {
-                                            vendorTextView.setText("👤 Vendor");
                                         }
                                     }
 
-                                    @Override
-                                    public void onCancelled(@NonNull DatabaseError error) {
-                                        vendorTextView.setText("👤 Vendor");
+                                    if (hasProduct) {
+                                        matchedMarkets[0]++;
+                                        createMarketCard(gridLayout, finalIndex, vendorUID, marketName,
+                                                barangay, phone_number, latitude, longitude, marketLocation, marketMarker);
+                                    } else {
+                                        marketMarker.remove();
                                     }
-                                });
-                            } else {
-                                // No vendor_id found
-                                vendorTextView.setText("👤 Vendor");
-                            }
+
+                                    // After all markets processed, check if any matched
+                                    if (finalIndex == snapshot.getChildrenCount() - 1) {
+                                        if (matchedMarkets[0] == 0) {
+                                            Toast.makeText(Market_Location.this,
+                                                    "No markets found for product: " + productFilter,
+                                                    Toast.LENGTH_SHORT).show();
+                                            retryButton.setVisibility(View.VISIBLE);
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public void onCancelled(@NonNull DatabaseError error) {}
+                            });
 
                             index++;
                         }
@@ -496,11 +423,122 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
 
                     @Override
                     public void onCancelled(@NonNull DatabaseError error) {
-                        Toast.makeText(Market_Location.this, "Failed to load markets", Toast.LENGTH_SHORT).show();
                         progressBar.setVisibility(View.GONE);
+                        Toast.makeText(Market_Location.this, "Failed to load markets.", Toast.LENGTH_SHORT).show();
                         retryButton.setVisibility(View.VISIBLE);
                     }
                 });
+    }
+
+
+    private void createMarketCard(GridLayout gridLayout, int index, String vendorUID,
+                                  String marketName, String barangay, String phoneNumber,
+                                  double latitude, double longitude, LatLng marketLocation,
+                                  Marker marketMarker) {
+
+        CardView cardView = new CardView(this);
+        GridLayout.LayoutParams params = new GridLayout.LayoutParams();
+        params.width = (int) (getResources().getDisplayMetrics().widthPixels / 2.2);
+        params.height = GridLayout.LayoutParams.WRAP_CONTENT;
+
+        int leftRightMargin = dpToPx(4);
+        int topBottomMargin = dpToPx(8);
+
+        if (index % 2 == 0) {
+            params.setMargins(dpToPx(8), topBottomMargin, leftRightMargin, topBottomMargin);
+        } else {
+            params.setMargins(leftRightMargin, topBottomMargin, dpToPx(8), topBottomMargin);
+        }
+
+        cardView.setLayoutParams(params);
+        cardView.setCardBackgroundColor(ContextCompat.getColor(this, R.color.shade1_green));
+        cardView.setRadius(24f);
+        cardView.setCardElevation(12f);
+        cardView.setUseCompatPadding(true);
+
+        LinearLayout linearLayout = new LinearLayout(this);
+        linearLayout.setOrientation(LinearLayout.VERTICAL);
+        linearLayout.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        linearLayout.setPadding(dpToPx(12), dpToPx(12), dpToPx(12), dpToPx(12));
+
+        // Vendor name placeholder
+        TextView vendorTextView = createTextView("Loading vendor...", 20, true);
+        linearLayout.addView(vendorTextView);
+
+        TextView marketTextView = createTextView("Market: " + marketName, 15, false);
+        TextView barangayTextView = createTextView("Brgy: " + barangay, 15, false);
+
+        // Distance calculation
+        Location userLoc = new Location("");
+        userLoc.setLatitude(userLat);
+        userLoc.setLongitude(userLong);
+        Location marketLoc = new Location("");
+        marketLoc.setLatitude(latitude);
+        marketLoc.setLongitude(longitude);
+        float distance = userLoc.distanceTo(marketLoc) / 1000;
+        TextView distanceTextView = createTextView("Distance: " + String.format("%.2f", distance) + " km", 15, false);
+        distanceTextView.setPadding(0, 0, 0, dpToPx(12));
+
+        // Details button
+        Button detailsButton = new Button(this);
+        detailsButton.setText("DETAILS");
+        detailsButton.setTextSize(12);
+        detailsButton.setTextColor(Color.WHITE);
+        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                dpToPx(36));
+        btnParams.gravity = Gravity.START;
+        btnParams.topMargin = dpToPx(8);
+        detailsButton.setLayoutParams(btnParams);
+
+        detailsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(Market_Location.this, Market_Details.class);
+            intent.putExtra("vendorUID", vendorUID);
+            startActivity(intent);
+        });
+
+        linearLayout.addView(marketTextView);
+        linearLayout.addView(barangayTextView);
+        linearLayout.addView(distanceTextView);
+        linearLayout.addView(detailsButton);
+
+        cardView.addView(linearLayout);
+        gridLayout.addView(cardView);
+
+        // Card click -> focus map
+        cardView.setOnClickListener(v -> {
+            if (gmap != null) {
+                gmap.animateCamera(CameraUpdateFactory.newLatLngZoom(marketLocation, 16));
+                if (marketMarker != null) marketMarker.showInfoWindow();
+            }
+        });
+
+        // Fetch vendor name from "users/vendors"
+        DatabaseReference vendorRef = FirebaseDatabase.getInstance()
+                .getReference("users/vendors").child(vendorUID);
+
+        vendorRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot vendorSnapshot) {
+                if (vendorSnapshot.exists()) {
+                    String vendorNameFetched = vendorSnapshot.child("username").getValue(String.class);
+                    if (vendorNameFetched != null && !vendorNameFetched.isEmpty()) {
+                        vendorTextView.setText("👤 " + vendorNameFetched);
+                    } else {
+                        vendorTextView.setText("👤 Vendor");
+                    }
+                } else {
+                    vendorTextView.setText("👤 Vendor");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                vendorTextView.setText("👤 Vendor");
+            }
+        });
     }
 
 

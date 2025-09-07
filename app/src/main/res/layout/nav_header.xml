@@ -8,7 +8,6 @@
     android:padding="16dp">
 
     <ImageView
-        android:id="@+id/nav_profile_image"
         android:layout_width="72dp"
         android:layout_height="72dp"
         android:src="@drawable/profile2"

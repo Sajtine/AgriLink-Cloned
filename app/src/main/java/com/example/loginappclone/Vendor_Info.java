@@ -1,7 +1,6 @@
 package com.example.loginappclone;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -13,6 +12,8 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -29,9 +30,6 @@ public class Vendor_Info extends AppCompatActivity {
 
     EditText MarketName, Street, Barangay, PhoneNumber, Municipality;
     Button btnUpdateMarket, openMap;
-
-    SharedPreferences sharedPreferences;
-    String vendorKey;  // normalized email key for Firebase node
 
     String latitude = "";
     String longitude = "";
@@ -53,12 +51,19 @@ public class Vendor_Info extends AppCompatActivity {
         btnUpdateMarket = findViewById(R.id.btnUpdateMarket);
         openMap = findViewById(R.id.openMap);
 
-        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
-        String email = sharedPreferences.getString("email", "");
-        vendorKey = normalizeEmail(email);
-
         database = FirebaseDatabase.getInstance();
-        marketRef = database.getReference("markets").child(vendorKey);
+
+        // Get current Firebase user UID
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        if (currentUser == null) {
+            Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show();
+            finish(); // close this activity if no user logged in
+            return;
+        }
+        String uid = currentUser.getUid();
+
+        // Use UID as key in markets node
+        marketRef = database.getReference("markets").child(uid);
 
         // Load existing market info from Firebase
         marketRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -107,6 +112,8 @@ public class Vendor_Info extends AppCompatActivity {
             marketRef.updateChildren(marketInfo).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     Toast.makeText(Vendor_Info.this, "Market info updated successfully!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(Vendor_Info.this, MainActivity.class);
+                    startActivity(intent);
                     finish();
                 } else {
                     Toast.makeText(Vendor_Info.this, "Failed to update market info.", Toast.LENGTH_SHORT).show();
@@ -114,7 +121,7 @@ public class Vendor_Info extends AppCompatActivity {
             });
         });
 
-        // Check if info is completed
+        // Check if info is completed (optional if you want to show dialog)
         boolean infoCheck = getIntent().getBooleanExtra("info_complete", true);
         if (!infoCheck) {
             showInfoDialog();
@@ -165,10 +172,5 @@ public class Vendor_Info extends AppCompatActivity {
                 Toast.makeText(this, "Error getting address", Toast.LENGTH_SHORT).show();
             }
         }
-    }
-
-    // Helper to normalize email as Firebase key
-    private String normalizeEmail(String email) {
-        return email.trim().toLowerCase().replace(".", ",");
     }
 }

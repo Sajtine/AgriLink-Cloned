@@ -89,7 +89,6 @@
         app:layout_constraintVertical_bias="0.019" />
 
     <ScrollView
-        android:id="@+id/cropScrollView"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginTop="10dp"

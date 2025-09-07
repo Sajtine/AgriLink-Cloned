@@ -1,74 +1,155 @@
 <!-- res/layout/list_item_request.xml -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="vertical"
-    android:padding="12dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground">
+    android:orientation="vertical"
+    android:padding="2dp"
+    android:background="@android:color/white">
 
-    <TextView
-        android:id="@+id/textProductName"
-        android:textStyle="bold"
-        android:textSize="17sp"
-        android:text="Name: "
-        android:textColor="#000000"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
-
-    <TextView
-        android:id="@+id/textStatus"
-        android:textSize="18sp"
-        android:text="Status: "
-        android:textColor="#4CAF50"
+    <!-- CardView container -->
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:fontFamily="@font/quicksandmeduim"
-        android:layout_marginTop="4dp"/>
+        android:layout_margin="8dp"
+        android:foreground="?android:attr/selectableItemBackground"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="6dp"
+        app:cardBackgroundColor="@color/white">
 
-    <TextView
-        android:id="@+id/textMarket"
-        android:textSize="15sp"
-        android:text="Market Name: "
-        android:textColor="#555"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/quicksandmeduim"
-        android:layout_marginTop="2dp"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
 
-    <TextView
-        android:id="@+id/textBarangay"
-        android:textSize="15sp"
-        android:textColor="#777"
-        android:text="Baranggay: "
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/quicksandmeduim"
-        android:layout_marginTop="1dp"/>
+            <!-- Top row: Product + Status -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Product Icon -->
+                <ImageView
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/product"
+                    android:contentDescription="Product Icon"
+                    android:layout_marginEnd="8dp" />
+
+                <!-- Product Name -->
+                <TextView
+                    android:id="@+id/textProductName"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Product Name"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:textColor="#222222"
+                    android:fontFamily="@font/quicksandmeduim" />
+
+                <!-- Status as Chip -->
+                <TextView
+                    android:id="@+id/textStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/status_background"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="8dp"
+                    android:text="Status"
+                    android:textColor="#FFFFFF"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/quicksandmeduim"
+                    android:layout_marginStart="8dp"
+                    android:layout_gravity="center_vertical"/>
+            </LinearLayout>
+
+            <!-- Price and Unit -->
+            <TextView
+                android:id="@+id/priceUnit"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="₱50 / kg"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:textColor="#388E3C"
+                android:fontFamily="@font/quicksandmeduim" />
+
+            <!-- Requested Quantity -->
+            <TextView
+                android:id="@+id/requestQuantity"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Quantity: 20 kg"
+                android:textSize="17sp"
+                android:textColor="#555"
+                android:fontFamily="@font/quicksandmeduim" />
 
 
-    <TextView
-        android:id="@+id/request_date"
-        android:textSize="15sp"
-        android:text="Request Date: "
-        android:textColor="#777"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/quicksandmeduim"
-        android:layout_marginTop="1dp"/>
+            <!-- Market name -->
+            <TextView
+                android:id="@+id/textMarket"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Market: Public Market"
+                android:textSize="17sp"
+                android:textColor="#444"
+                android:fontFamily="@font/quicksandmeduim" />
 
-    <TextView
-        android:id="@+id/delivery_date"
-        android:textSize="15sp"
-        android:text="Delivery Date: "
-        android:textColor="#777"
-        android:textStyle="bold"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:fontFamily="@font/quicksandmeduim"
-        android:layout_marginTop="1dp"/>
+            <!-- Barangay -->
+            <TextView
+                android:id="@+id/textBarangay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Barangay: Sample"
+                android:textSize="16sp"
+                android:textColor="#777"
+                android:fontFamily="@font/quicksandmeduim" />
 
+            <!-- Divider line -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="#E0E0E0"
+                android:layout_marginTop="12dp"
+                android:layout_marginBottom="6dp" />
 
+            <!-- Dates row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
 
+                <TextView
+                    android:id="@+id/request_date"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Request: 01/01/2025"
+                    android:textSize="14sp"
+                    android:textColor="#555"
+                    android:fontFamily="@font/quicksandmeduim" />
 
-
+                <TextView
+                    android:id="@+id/delivery_date"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Delivery: 02/01/2025"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="#1976D2"
+                    android:fontFamily="@font/quicksandmeduim"
+                    android:gravity="end" />
+            </LinearLayout>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 </LinearLayout>

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ListView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -24,6 +25,7 @@ public class ChatList extends AppCompatActivity {
     ChatUserAdapter adapter;
     DatabaseReference dbRef;
     String currentUser;
+    TextView noChatsMessage; // NEW
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,6 +33,7 @@ public class ChatList extends AppCompatActivity {
         setContentView(R.layout.activity_chat_list);
 
         chatListView = findViewById(R.id.chatListView);
+        noChatsMessage = findViewById(R.id.noChatsMessage); // NEW
 
         // Get current user
         SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
@@ -80,7 +83,7 @@ public class ChatList extends AppCompatActivity {
                                     latestMsg = msg;
                                 }
 
-                                // 🔴 Count unread messages sent to current user by the other user
+                                // Count unread messages sent to current user by the other user
                                 if (msg.receiverId.equals(currentUser) &&
                                         msg.senderId.equals(otherUser) &&
                                         !msg.isRead) {
@@ -94,11 +97,20 @@ public class ChatList extends AppCompatActivity {
                             ChatUserAdapter.lastMessageTimes.put(otherUser, formatTime(latestMsg.timestamp));
                         }
 
-                        ChatUserAdapter.unreadCounts.put(otherUser, unreadCount); // 🔴 Save count
+                        ChatUserAdapter.unreadCounts.put(otherUser, unreadCount); // Save count
                     }
                 }
 
                 adapter.notifyDataSetChanged();
+
+                // ✅ Show or hide "No chats" message
+                if (chatUsers.isEmpty()) {
+                    noChatsMessage.setVisibility(TextView.VISIBLE);
+                    chatListView.setVisibility(ListView.GONE);
+                } else {
+                    noChatsMessage.setVisibility(TextView.GONE);
+                    chatListView.setVisibility(ListView.VISIBLE);
+                }
             }
 
             @Override

@@ -1,8 +1,6 @@
 package com.example.loginappclone;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -13,19 +11,37 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class Farmers_Details extends AppCompatActivity {
     private EditText fullNameInput, addressInput, phoneInput, emailInput;
     private Button saveButton, mapSelection;
     private String latitude, longitude;
 
+    private FirebaseAuth auth;
+    private DatabaseReference userRef;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.farmers_details);
+
+        // Initialize Firebase
+        auth = FirebaseAuth.getInstance();
+        userRef = FirebaseDatabase.getInstance().getReference("users")
+                .child("farmers")
+                .child(auth.getCurrentUser().getUid());
 
         // Initialize views
         fullNameInput = findViewById(R.id.fullNameInput);
@@ -35,40 +51,7 @@ public class Farmers_Details extends AppCompatActivity {
         saveButton = findViewById(R.id.saveButton);
         mapSelection = findViewById(R.id.mapSelection);
 
-        saveButton.setOnClickListener(v -> {
-            // Get values from input
-            String name = fullNameInput.getText().toString().trim();
-            String address = addressInput.getText().toString().trim();
-            String phone = phoneInput.getText().toString().trim();
-            String email = emailInput.getText().toString().trim();
-
-            // Simple validation
-            if (name.isEmpty() || address.isEmpty() || phone.isEmpty() || email.isEmpty()) {
-                Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            MyDatabaseHelper db = new MyDatabaseHelper(this);
-            boolean isUpdated = db.updateFarmerDetails(email, name, address, phone);
-
-            if (isUpdated) {
-                Toast.makeText(this, "Details updated successfully", Toast.LENGTH_SHORT).show();
-
-                // Redirect only after a successful update
-                boolean shouldDirectToMarket = getIntent().getBooleanExtra("redirectToMarket", false);
-
-                if (shouldDirectToMarket) {
-                    Intent intent = new Intent(Farmers_Details.this, Market_Location.class);
-                    startActivity(intent);
-                }
-
-                finish(); // Close this activity
-            } else {
-                Toast.makeText(this, "Failed to update details", Toast.LENGTH_SHORT).show();
-            }
-        });
-
-
+        saveButton.setOnClickListener(v -> saveUserDetails());
         mapSelection.setOnClickListener(v -> {
             Intent intent = new Intent(this, FarmerMapPicker.class);
             startActivityForResult(intent, 1001);
@@ -77,30 +60,73 @@ public class Farmers_Details extends AppCompatActivity {
         getFarmersDetails();
     }
 
+    private void getFarmersDetails() {
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    String name = snapshot.child("username").getValue(String.class);
+                    String email = snapshot.child("email").getValue(String.class);
+                    String phoneNumber = snapshot.child("phoneNumber").getValue(String.class);
+                    String address = snapshot.child("address").getValue(String.class);
 
-    public void getFarmersDetails(){
+                    fullNameInput.setText(name != null ? name : "");
+                    emailInput.setText(email != null ? email : "");
+                    phoneInput.setText(phoneNumber != null ? phoneNumber : "");
+                    addressInput.setText(address != null ? address : "");
 
-        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
-        String email = sharedPreferences.getString("email", null);
+                    // If address or phone number is missing, prompt to fill
+                    if (address == null || address.isEmpty() ||
+                            phoneNumber == null || phoneNumber.isEmpty()) {
+                        Toast.makeText(Farmers_Details.this,
+                                "Please complete your profile with address and phone number.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                } else {
+                    Toast.makeText(Farmers_Details.this,
+                            "User details not found.", Toast.LENGTH_SHORT).show();
+                }
+            }
 
-        MyDatabaseHelper databaseHelper = new MyDatabaseHelper(this);
-        Cursor cursor = databaseHelper.getUserDetails(email);
+            @Override
+            public void onCancelled(DatabaseError error) {
+                Toast.makeText(Farmers_Details.this,
+                        "Failed to load data: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
-        if(cursor.moveToFirst()){
+    private void saveUserDetails() {
+        String name = fullNameInput.getText().toString().trim();
+        String address = addressInput.getText().toString().trim();
+        String phone = phoneInput.getText().toString().trim();
+        String email = emailInput.getText().toString().trim();
 
-            String name = cursor.getString(cursor.getColumnIndexOrThrow("username"));
-            String user_email = cursor.getString(cursor.getColumnIndexOrThrow("email"));
-            String phone_number = cursor.getString(cursor.getColumnIndexOrThrow("phone_number"));
-            String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
-
-            fullNameInput.setText(name);
-            emailInput.setText(user_email);
-            phoneInput.setText(phone_number);
-            addressInput.setText(address);
+        if (name.isEmpty() || address.isEmpty() || phone.isEmpty() || email.isEmpty()) {
+            Toast.makeText(this, "Please fill out all fields", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        cursor.close();
-        databaseHelper.close();
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("username", name);
+        updates.put("address", address);
+        updates.put("phoneNumber", phone);
+        updates.put("email", email);
+
+        userRef.updateChildren(updates).addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                Toast.makeText(this, "Details updated successfully", Toast.LENGTH_SHORT).show();
+
+                boolean shouldDirectToMarket = getIntent().getBooleanExtra("redirectToMarket", false);
+                if (shouldDirectToMarket) {
+                    startActivity(new Intent(Farmers_Details.this, Market_Location.class));
+                }
+
+                finish();
+            } else {
+                Toast.makeText(this, "Failed to update details", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -116,14 +142,16 @@ public class Farmers_Details extends AppCompatActivity {
 
             Geocoder geocoder = new Geocoder(this, Locale.getDefault());
             try {
-                List<Address> adddressList = geocoder.getFromLocation(lat, lng, 1);
-                Address address = adddressList.get(0);
+                List<Address> addressList = geocoder.getFromLocation(lat, lng, 1);
+                Address addressObj = addressList.get(0);
 
-                String barangay = address.getSubLocality();
-                String streetName = address.getThoroughfare();
-                String city = address.getLocality();
+                String barangay = addressObj.getSubLocality();
+                String streetName = addressObj.getThoroughfare();
+                String city = addressObj.getLocality();
 
-                String fullAddress = streetName + ", " + barangay + ", " + city;
+                String fullAddress = (streetName != null ? streetName : "") + ", " +
+                        (barangay != null ? barangay : "") + ", " +
+                        (city != null ? city : "");
 
                 addressInput.setText(fullAddress);
 

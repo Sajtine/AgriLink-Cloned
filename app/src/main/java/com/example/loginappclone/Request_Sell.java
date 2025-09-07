@@ -1,46 +1,36 @@
 package com.example.loginappclone;
 
-import android.content.Context;
+import android.app.DatePickerDialog;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.RadioButton;
-import android.widget.RadioGroup;
-import android.widget.Spinner;
-import android.widget.Toast;
+import android.widget.*;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.*;
+
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class Request_Sell extends DialogFragment {
 
-    private static final String ARG_VENDOR_ID = "vendor_id";
-    private int vendorId;
-    private MyDatabaseHelper db;
+    private String vendorUID, vendorName, marketName;
+    private FirebaseAuth auth;
+    private DatabaseReference dbRef;
 
-    public static Request_Sell newInstance(String vendorId) {
-        Request_Sell fragment = new Request_Sell();
-        Bundle args = new Bundle();
-        args.putString(ARG_VENDOR_ID, vendorId);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    private static final int PICK_LOCATION_REQUEST_CODE = 1001;
+
+    // Selected location
+    private Double selectedLatitude = null;
+    private Double selectedLongitude = null;
 
     @Nullable
     @Override
@@ -49,39 +39,36 @@ public class Request_Sell extends DialogFragment {
 
         View view = inflater.inflate(R.layout.fragment_request_sell, container, false);
 
-        // Optional: Remove the top padding from the dialog background
         if (getDialog() != null && getDialog().getWindow() != null) {
             getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.WHITE));
-
         }
 
-        SharedPreferences sharedPreferences = requireActivity().getSharedPreferences("UserSession", Context.MODE_PRIVATE);
-        String email = sharedPreferences.getString("email", null);
-        String userId = sharedPreferences.getString("userId", null);
-        String username = sharedPreferences.getString("username", null);
+        auth = FirebaseAuth.getInstance();
+        dbRef = FirebaseDatabase.getInstance().getReference();
 
-        db = new MyDatabaseHelper(getContext());
+        if (getArguments() != null) {
+            vendorUID = getArguments().getString("vendor_id");
+            vendorName = getArguments().getString("vendorName");
+            marketName = getArguments().getString("marketName");
+        }
 
         EditText productName = view.findViewById(R.id.input_product_name);
         EditText quantity = view.findViewById(R.id.input_quantity);
         EditText price = view.findViewById(R.id.input_price);
         EditText deliveryDate = view.findViewById(R.id.input_delivery_date);
         Button submitBtn = view.findViewById(R.id.submit_request);
+        Spinner spinner = view.findViewById(R.id.payment_method);
+        RadioGroup radioGroup = view.findViewById(R.id.pickup_option_group);
+        Button btnPickLocation = view.findViewById(R.id.btn_pick_location);
 
-        if (getArguments() != null) {
-            vendorId = Integer.parseInt(getArguments().getString(ARG_VENDOR_ID));
-        }
-
-        // Handle delivery date picker
+        // Date picker
         deliveryDate.setOnClickListener(v -> {
             Calendar calendar = Calendar.getInstance();
-            new android.app.DatePickerDialog(
-                    requireContext(),
+            new DatePickerDialog(requireContext(),
                     (view1, year, month, dayOfMonth) -> {
                         Calendar selectedDate = Calendar.getInstance();
                         selectedDate.set(year, month, dayOfMonth);
-                        String formattedDate = new SimpleDateFormat("MMMM dd, yyyy").format(selectedDate.getTime());
-                        deliveryDate.setText(formattedDate);
+                        deliveryDate.setText(new SimpleDateFormat("MMMM dd, yyyy", Locale.ENGLISH).format(selectedDate.getTime()));
                     },
                     calendar.get(Calendar.YEAR),
                     calendar.get(Calendar.MONTH),
@@ -89,27 +76,28 @@ public class Request_Sell extends DialogFragment {
             ).show();
         });
 
-        // Set up payment option spinner
-        Spinner spinner = view.findViewById(R.id.payment_method);
+        // Payment spinner
+        List<String> paymentOptions = Collections.singletonList("Cash on Delivery");
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), R.layout.spinner_item, paymentOptions);
+        adapter.setDropDownViewResource(R.layout.spinner_item);
+        spinner.setAdapter(adapter);
 
-        // Check if Spinner was found
-        if (spinner != null) {
-            List<String> paymentOptions = new ArrayList<>();
-            paymentOptions.add("Cash on Delivery");
+        // Show/hide pick location button based on pickup option
+        radioGroup.setOnCheckedChangeListener((group, checkedId) -> {
+            if (checkedId == R.id.option_vendor_pickup) {
+                btnPickLocation.setVisibility(View.VISIBLE);
+            } else {
+                btnPickLocation.setVisibility(View.GONE);
+                selectedLatitude = null;
+                selectedLongitude = null;
+            }
+        });
 
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                    requireContext(),
-                    R.layout.spinner_item,
-                    paymentOptions
-            );
-            adapter.setDropDownViewResource(R.layout.spinner_item);
-
-            spinner.setAdapter(adapter);
-        } else {
-            Log.e("RequestSell", "Spinner not found!");
-            Toast.makeText(getContext(), "Payment spinner not found in layout!", Toast.LENGTH_SHORT).show();
-        }
-
+        // Open MapPicker when button clicked
+        btnPickLocation.setOnClickListener(v -> {
+            Intent intent = new Intent(getContext(), MapPicker.class);
+            startActivityForResult(intent, PICK_LOCATION_REQUEST_CODE);
+        });
 
         submitBtn.setOnClickListener(v -> {
             String name = productName.getText().toString().trim();
@@ -118,59 +106,101 @@ public class Request_Sell extends DialogFragment {
             String date = deliveryDate.getText().toString().trim();
             String paymentMethod = spinner.getSelectedItem().toString();
 
-            // Get selected option in radio button
-            RadioGroup radioGroup = view.findViewById(R.id.pickup_option_group);
-
             int selectedId = radioGroup.getCheckedRadioButtonId();
-            String pickUpOption = "";
-
-            if (selectedId != -1){
-
-                RadioButton selectedRadio = view.findViewById(selectedId);
-
-                pickUpOption = selectedRadio.getText().toString();
-
+            if (selectedId == -1) {
+                Toast.makeText(getContext(), "Please select a pickup option", Toast.LENGTH_SHORT).show();
+                return;
             }
+            RadioButton selectedRadio = view.findViewById(selectedId);
+            String pickUpOption = selectedRadio.getText().toString();
 
             if (name.isEmpty() || qtyStr.isEmpty() || priceStr.isEmpty() || date.isEmpty()) {
                 Toast.makeText(getContext(), "Please fill all required fields", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Cursor cursor = db.getUserDetails(email);
-            if (cursor != null && cursor.moveToFirst()) {
-                String phoneNumber = cursor.getString(cursor.getColumnIndexOrThrow("phone_number"));
-                String address = cursor.getString(cursor.getColumnIndexOrThrow("address"));
-
-                if (phoneNumber == null || phoneNumber.isEmpty() || address == null || address.isEmpty()) {
-                    Toast.makeText(getContext(), "Please complete your profile info first", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(getContext(), Farmers_Details.class);
-                    intent.putExtra("redirectToMarket", true);
-                    startActivity(intent);
-                    dismiss();
-                    return;
-                }
-
-                int qty = Integer.parseInt(qtyStr);
-                double prc = Double.parseDouble(priceStr);
-                String timestamp = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(new Date());
-
-                boolean inserted = db.insertRequest(name, qty, prc, date, vendorId,
-                        Integer.parseInt(userId), username, phoneNumber, timestamp, pickUpOption, paymentMethod);
-
-                if (inserted) {
-                    Toast.makeText(getContext(), "Request Sent!", Toast.LENGTH_SHORT).show();
-                    dismiss();
-                } else {
-                    Toast.makeText(getContext(), "Failed to send request.", Toast.LENGTH_SHORT).show();
-                }
-
-            } else {
-                Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+            // Require location if vendor will pick up
+            if (pickUpOption.equalsIgnoreCase("Vendor will pick up the product") &&
+                    (selectedLatitude == null || selectedLongitude == null)) {
+                Toast.makeText(getContext(), "Please select pick-up location", Toast.LENGTH_SHORT).show();
+                return;
             }
+
+            submitRequest(name, qtyStr, priceStr, date, paymentMethod, pickUpOption, selectedLatitude, selectedLongitude);
         });
 
         return view;
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == PICK_LOCATION_REQUEST_CODE && data != null) {
+            selectedLatitude = data.getDoubleExtra("latitude", 0);
+            selectedLongitude = data.getDoubleExtra("longitude", 0);
+            Toast.makeText(getContext(), "Location selected!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void submitRequest(String name, String qtyStr, String priceStr, String date, String paymentMethod,
+                               String pickUpOption, Double latitude, Double longitude) {
+
+        String currentUserUID = auth.getCurrentUser().getUid();
+
+        dbRef.child("users").child("farmers").child(currentUserUID)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        if (!snapshot.exists()) {
+                            Toast.makeText(getContext(), "User not found", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        String farmerName = snapshot.child("username").getValue(String.class);
+                        String phoneNumber = snapshot.child("phoneNumber").getValue(String.class);
+                        String address = snapshot.child("address").getValue(String.class);
+
+                        if (phoneNumber == null || phoneNumber.isEmpty() || address == null || address.isEmpty()) {
+                            Toast.makeText(getContext(), "Please complete your profile info first", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        int qty = Integer.parseInt(qtyStr);
+                        double prc = Double.parseDouble(priceStr);
+                        String timestamp = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).format(new Date());
+
+                        DatabaseReference requestRef = dbRef.child("requests").child(vendorUID).push();
+                        requestRef.child("productName").setValue(name);
+                        requestRef.child("quantity").setValue(qty);
+                        requestRef.child("price").setValue(prc);
+                        requestRef.child("deliveryDate").setValue(date);
+                        requestRef.child("vendorUID").setValue(vendorUID);
+                        requestRef.child("vendorName").setValue(vendorName);
+                        requestRef.child("marketName").setValue(marketName);
+                        requestRef.child("farmerUID").setValue(currentUserUID);
+                        requestRef.child("farmerName").setValue(farmerName);
+                        requestRef.child("phoneNumber").setValue(phoneNumber);
+                        requestRef.child("address").setValue(address);
+                        requestRef.child("requestDate").setValue(timestamp);
+                        requestRef.child("pickupOption").setValue(pickUpOption);
+                        requestRef.child("paymentMethod").setValue(paymentMethod);
+                        requestRef.child("status").setValue("Pending");
+
+                        // Save location only if vendor will pick up
+                        if (latitude != null && longitude != null) {
+                            requestRef.child("latitude").setValue(latitude);
+                            requestRef.child("longitude").setValue(longitude);
+                        }
+
+                        Toast.makeText(getContext(), "Request Sent!", Toast.LENGTH_SHORT).show();
+                        dismiss();
+                    }
+
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+                        Toast.makeText(getContext(), "Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     @Override
@@ -178,16 +208,12 @@ public class Request_Sell extends DialogFragment {
         return R.style.RequestSellDialog;
     }
 
-
     @Override
     public void onStart() {
         super.onStart();
         if (getDialog() != null && getDialog().getWindow() != null) {
             int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.90);
-            int height = ViewGroup.LayoutParams.WRAP_CONTENT;
-            getDialog().getWindow().setLayout(width, height);
+            getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
-
-
 }

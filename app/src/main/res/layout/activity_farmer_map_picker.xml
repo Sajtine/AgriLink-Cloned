@@ -22,7 +22,6 @@
 
     <!-- Back Button in a Circle -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/btnBackContainer"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_margin="16dp"
@@ -44,7 +43,6 @@
 
     <!-- Center Pin -->
     <ImageView
-        android:id="@+id/imgPin"
         android:layout_width="25dp"
         android:layout_height="25dp"
         android:src="@drawable/pin_location"
@@ -56,7 +54,6 @@
 
     <!-- Floating Info Card -->
     <androidx.cardview.widget.CardView
-        android:id="@+id/infoCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -76,7 +73,6 @@
             android:padding="20dp">
 
             <TextView
-                android:id="@+id/locationLabel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Selected Location:"

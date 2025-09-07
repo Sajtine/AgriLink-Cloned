@@ -14,7 +14,6 @@
         android:layout_gravity="top">
 
         <TextView
-            android:id="@+id/title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Request Sell Form"
@@ -69,7 +68,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginBottom="20dp">
+            android:layout_marginBottom="5dp">
 
             <RadioButton
                 android:id="@+id/option_vendor_pickup"
@@ -78,11 +77,25 @@
                 android:text="Vendor will pick up the product" />
 
             <RadioButton
-                android:id="@+id/option_farmer_delivery"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Farmer will deliver the product" />
         </RadioGroup>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_pick_location"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Use Map to Select Address"
+            android:textAllCaps="false"
+            android:textSize="14sp"
+            android:textColor="@color/white"
+            android:backgroundTint="@color/shade2_blue"
+            app:cornerRadius="12dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:visibility="gone" />
+
 
 
         <TextView

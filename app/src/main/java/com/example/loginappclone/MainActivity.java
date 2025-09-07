@@ -44,13 +44,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        userEmail = findViewById(R.id.email);
-        userPassword = findViewById(R.id.password);
+//        userEmail = findViewById(R.id.email);
+//        userPassword = findViewById(R.id.password);
         loginButton = findViewById(R.id.submit);
         registerTextView = findViewById(R.id.register);
         databaseHelper = new MyDatabaseHelper(this);
         sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
-        forgotPassword = findViewById(R.id.forgotPassword);
+//        forgotPassword = findViewById(R.id.forgotPassword);
     }
 
     private void setupStatusBar() {
@@ -121,8 +121,8 @@ public class MainActivity extends AppCompatActivity {
         registerTextView.setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, Register.class)));
 
-        forgotPassword.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, ForgotPasswordActivity.class)));
+//        forgotPassword.setOnClickListener(v ->
+//                startActivity(new Intent(MainActivity.this, ForgotPasswordActivity.class)));
     }
 
     private void validateAndLogin() {
