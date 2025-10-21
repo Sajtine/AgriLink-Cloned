@@ -67,7 +67,7 @@ public class AddProducts extends AppCompatActivity {
             String priceText = productPrice.getText().toString().trim();
             String unit = unitSpinner.getSelectedItem().toString();
 
-            // Check if all fields are filled
+            // Check if all fields are filled with info
             if (product_name.isEmpty() || priceText.isEmpty()) {
                 Toast.makeText(getApplicationContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
                 return;
