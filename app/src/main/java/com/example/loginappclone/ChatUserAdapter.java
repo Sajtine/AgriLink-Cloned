@@ -1,36 +1,50 @@
 package com.example.loginappclone;
 
 import android.content.Context;
-import android.view.*;
-import android.widget.*;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.BaseAdapter;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ChatUserAdapter extends BaseAdapter {
-    Context context;
-    ArrayList<String> users;
-    LayoutInflater inflater;
 
-    // ✅ Added for last message and time
+    Context context;
+    ArrayList<String> chatUserUIDs;
+
+    // Static maps for last messages, times, unread counts
     public static HashMap<String, String> lastMessages = new HashMap<>();
     public static HashMap<String, String> lastMessageTimes = new HashMap<>();
     public static HashMap<String, Integer> unreadCounts = new HashMap<>();
 
-    public ChatUserAdapter(Context context, ArrayList<String> users) {
+    // Map to store fetched usernamessZ
+    public static HashMap<String, String> uidToUsername = new HashMap<>();
+
+    public ChatUserAdapter(Context context, ArrayList<String> chatUserUIDs) {
         this.context = context;
-        this.users = users;
-        this.inflater = LayoutInflater.from(context);
+        this.chatUserUIDs = chatUserUIDs;
     }
 
     @Override
     public int getCount() {
-        return users.size();
+        return chatUserUIDs.size();
     }
 
     @Override
     public Object getItem(int position) {
-        return users.get(position);
+        return chatUserUIDs.get(position);
     }
 
     @Override
@@ -38,62 +52,68 @@ public class ChatUserAdapter extends BaseAdapter {
         return position;
     }
 
-    static class ViewHolder {
-        ImageView profile;
-        TextView username, lastMessage, time, unreadBadge;
-    }
-
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        ViewHolder holder;
-
 
         if (convertView == null) {
-            convertView = inflater.inflate(R.layout.chatlist_item, parent, false);
-            holder = new ViewHolder();
-            holder.profile = convertView.findViewById(R.id.chat_profile);
-            holder.username = convertView.findViewById(R.id.chat_username);
-            holder.lastMessage = convertView.findViewById(R.id.chat_last_message);
-            holder.time = convertView.findViewById(R.id.chat_time);
-            holder.unreadBadge = convertView.findViewById(R.id.chat_unread_count);
-            convertView.setTag(holder);
+            convertView = LayoutInflater.from(context).inflate(R.layout.chatlist_item, parent, false);
+        }
+
+        String uid = chatUserUIDs.get(position);
+        TextView tvUsername = convertView.findViewById(R.id.chat_username);
+        TextView tvLastMessage = convertView.findViewById(R.id.chat_last_message);
+        TextView tvTime = convertView.findViewById(R.id.chat_time);
+        TextView tvUnread = convertView.findViewById(R.id.chat_unread_count);
+        ImageView profile = convertView.findViewById(R.id.chat_profile);
+
+        // Set last message, time, unread count
+        tvLastMessage.setText(lastMessages.getOrDefault(uid, "Typing..."));
+        tvTime.setText(lastMessageTimes.getOrDefault(uid, ""));
+        int unread = unreadCounts.getOrDefault(uid, 0);
+        tvUnread.setVisibility(unread > 0 ? View.VISIBLE : View.GONE);
+        tvUnread.setText(String.valueOf(unread));
+
+        // Fetch username if not already fetched
+        if (uidToUsername.containsKey(uid)) {
+            tvUsername.setText(uidToUsername.get(uid));
         } else {
-            holder = (ViewHolder) convertView.getTag();
+            tvUsername.setText("Loading...");
+            fetchUsername(uid, tvUsername);
         }
-
-        // Set values
-        String user = users.get(position);
-        holder.username.setText(user);
-
-        // ✅ Display the last message and time (if available)
-        if (lastMessages.containsKey(user)) {
-            holder.lastMessage.setText(lastMessages.get(user));
-        } else {
-            holder.lastMessage.setText("No messages yet");
-        }
-
-        if (lastMessageTimes.containsKey(user)) {
-            holder.time.setText(lastMessageTimes.get(user));
-        } else {
-            holder.time.setText("");
-        }
-
-        // For unread counts
-        if(unreadCounts.containsKey(user)) {
-            int count = unreadCounts.get(user);
-            if (count > 0){
-                holder.unreadBadge.setText(count > 99 ? "99+" : String.valueOf(count));
-                holder.unreadBadge.setVisibility(View.VISIBLE);
-            }else{
-                holder.unreadBadge.setVisibility(View.GONE);
-            }
-        }else{
-            holder.unreadBadge.setVisibility(View.GONE);
-        }
-
-        // Set default profile image
-        holder.profile.setImageResource(R.drawable.person);
 
         return convertView;
+    }
+
+    private void fetchUsername(@NonNull String uid, @NonNull TextView tvUsername) {
+        DatabaseReference farmersRef = FirebaseDatabase.getInstance()
+                .getReference("users/farmers/" + uid + "/username");
+        DatabaseReference vendorsRef = FirebaseDatabase.getInstance()
+                .getReference("users/vendors/" + uid + "/username");
+
+        farmersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                String username = snapshot.getValue(String.class);
+                if (username != null) {
+                    uidToUsername.put(uid, username);
+                    tvUsername.setText(username);
+                } else {
+                    vendorsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot snapshot2) {
+                            String username2 = snapshot2.getValue(String.class);
+                            uidToUsername.put(uid, username2 != null ? username2 : "Unknown");
+                            tvUsername.setText(uidToUsername.get(uid));
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) {}
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {}
+        });
     }
 }

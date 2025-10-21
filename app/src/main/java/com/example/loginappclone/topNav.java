@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import androidx.appcompat.widget.SearchView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -34,7 +35,23 @@ public class topNav extends Fragment {
         View view = inflater.inflate(R.layout.fragment_top_nav, container, false);
 
         messages = view.findViewById(R.id.messages);
-        badgeCount = view.findViewById(R.id.badgeCount); // ← make sure badgeCount exists in your layout
+        badgeCount = view.findViewById(R.id.badgeCount);
+
+
+        // Replace the search bar when in Home activity
+        SearchView search_bar = view.findViewById(R.id.search_bar);
+        TextView text_qoute = view.findViewById(R.id.text_qoute);
+
+        String currentActivity = requireActivity().getClass().getSimpleName();
+
+        if (currentActivity.equals("Home")){
+            search_bar.setVisibility(View.GONE);
+            text_qoute.setVisibility(View.VISIBLE);
+        }else{
+            search_bar.setVisibility(View.VISIBLE);
+            text_qoute.setVisibility(View.GONE);
+        }
+
 
         messages.setOnClickListener(v -> {
             startActivity(new Intent(requireActivity(), ChatList.class));

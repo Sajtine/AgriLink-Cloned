@@ -67,8 +67,11 @@ public class Profile extends AppCompatActivity {
         username = findViewById(R.id.username);
         farmersLocation = findViewById(R.id.farmersLocation);
 
-        // ✅ Firebase setup
-        currentUserUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        // Get current user UID
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+
+        currentUserUID = sharedPreferences.getString("uid", null);
         databaseRef = FirebaseDatabase.getInstance().getReference("users").child("farmers");
 
         if(currentUserUID != null){
@@ -97,7 +100,7 @@ public class Profile extends AppCompatActivity {
         profile.setImageResource(R.drawable.profile_active);
     }
 
-    // ✅ Fetch user info from Firebase
+    // Fetch user info from Firebase
     private void getUserDetails(String uid){
         databaseRef.child(uid).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -122,7 +125,7 @@ public class Profile extends AppCompatActivity {
 
     // Logout method
     public void logout(){
-        FirebaseAuth.getInstance().signOut(); // ✅ logout Firebase session too
+        FirebaseAuth.getInstance().signOut(); // logout Firebase session too
 
         SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();

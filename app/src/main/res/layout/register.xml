@@ -61,33 +61,37 @@
 
         />
 
-<!--        <EditText-->
-<!--            android:id="@+id/password"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="20dp"-->
-<!--            android:background="@drawable/roundcorners_reg"-->
-<!--            android:drawableLeft="@drawable/password"-->
-<!--            android:drawablePadding="10dp"-->
-<!--            android:hint="Password"-->
-<!--            android:inputType="textPassword"-->
-<!--            android:padding="12dp"-->
-<!--            android:textColor="@color/white"-->
-<!--            android:textColorHint="@color/white" />-->
+        <EditText
+            android:id="@+id/password"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/roundcorners_reg"
+            android:drawableLeft="@drawable/password"
+            android:drawableRight="@drawable/closed_eye"
+            android:drawablePadding="10dp"
+            android:hint="Password"
+            android:inputType="textPassword"
+            android:padding="12dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/white"
+            android:drawableTint="@color/white" />
 
-<!--        <EditText-->
-<!--            android:id="@+id/confirmPassword"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginTop="20dp"-->
-<!--            android:background="@drawable/roundcorners_reg"-->
-<!--            android:drawableLeft="@drawable/password"-->
-<!--            android:drawablePadding="10dp"-->
-<!--            android:hint="Re-enter Password"-->
-<!--            android:inputType="textPassword"-->
-<!--            android:padding="12dp"-->
-<!--            android:textColor="@color/white"-->
-<!--            android:textColorHint="@color/white" />-->
+
+        <EditText
+            android:id="@+id/confirmPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/roundcorners_reg"
+            android:drawableLeft="@drawable/password"
+            android:drawablePadding="10dp"
+            android:hint="Re-enter Password"
+            android:inputType="textPassword"
+            android:drawableRight="@drawable/closed_eye"
+            android:padding="12dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/white" />
 
         <Spinner
             android:id="@+id/userTypeSpinner"

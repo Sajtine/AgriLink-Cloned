@@ -1,5 +1,6 @@
 package com.example.loginappclone;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -35,6 +36,7 @@ public class VendorProducts extends AppCompatActivity {
 
     DatabaseReference vendorProductsRef;
     String vendorUID;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,14 +45,16 @@ public class VendorProducts extends AppCompatActivity {
 
         listViewProducts = findViewById(R.id.listViewProducts);
 
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        String currentUser = sharedPreferences.getString("uid", null);
+
         if (currentUser == null) {
             Toast.makeText(this, "Not logged in!", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
 
-        vendorUID = currentUser.getUid();
+        vendorUID = currentUser;
         vendorProductsRef = FirebaseDatabase.getInstance().getReference("vendor_products").child(vendorUID);
 
         productList = new ArrayList<>();

@@ -1,6 +1,7 @@
 package com.example.loginappclone;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
@@ -8,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -35,7 +37,7 @@ public class Vendor_Info extends AppCompatActivity {
     String longitude = "";
 
     FirebaseDatabase database;
-    DatabaseReference marketRef;
+    DatabaseReference marketRef, vendorRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,13 +56,15 @@ public class Vendor_Info extends AppCompatActivity {
         database = FirebaseDatabase.getInstance();
 
         // Get current Firebase user UID
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        String currentUser = sharedPreferences.getString("uid", null);
+
         if (currentUser == null) {
             Toast.makeText(this, "User not logged in!", Toast.LENGTH_SHORT).show();
             finish(); // close this activity if no user logged in
             return;
         }
-        String uid = currentUser.getUid();
+        String uid = currentUser;
 
         // Use UID as key in markets node
         marketRef = database.getReference("markets").child(uid);
@@ -73,7 +77,6 @@ public class Vendor_Info extends AppCompatActivity {
                     MarketName.setText(snapshot.child("marketName").getValue(String.class));
                     Street.setText(snapshot.child("street").getValue(String.class));
                     Barangay.setText(snapshot.child("barangay").getValue(String.class));
-                    PhoneNumber.setText(snapshot.child("phoneNumber").getValue(String.class));
                     Municipality.setText(snapshot.child("municipality").getValue(String.class));
                     latitude = snapshot.child("latitude").getValue(String.class);
                     longitude = snapshot.child("longitude").getValue(String.class);
@@ -83,6 +86,26 @@ public class Vendor_Info extends AppCompatActivity {
             @Override
             public void onCancelled(DatabaseError error) {
                 Toast.makeText(Vendor_Info.this, "Failed to load market info.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Fetch vendor number in user node
+        vendorRef = database.getReference("users").child("vendors").child(uid);
+
+        vendorRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()){
+                    String phoneNumber = snapshot.child("phone_number").getValue(String.class);
+                    PhoneNumber.setText(phoneNumber);
+                }else{
+                    Toast.makeText(Vendor_Info.this, "Vendor not found", Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(Vendor_Info.this, "Database Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -99,11 +122,11 @@ public class Vendor_Info extends AppCompatActivity {
                 return;
             }
 
+            // Market info (without phone number)
             Map<String, Object> marketInfo = new HashMap<>();
             marketInfo.put("marketName", name);
             marketInfo.put("street", street);
             marketInfo.put("barangay", barangay);
-            marketInfo.put("phoneNumber", phone);
             marketInfo.put("municipality", municipality);
             marketInfo.put("latitude", latitude);
             marketInfo.put("longitude", longitude);
@@ -111,15 +134,28 @@ public class Vendor_Info extends AppCompatActivity {
 
             marketRef.updateChildren(marketInfo).addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
-                    Toast.makeText(Vendor_Info.this, "Market info updated successfully!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(Vendor_Info.this, MainActivity.class);
-                    startActivity(intent);
-                    finish();
+                    // Update phone number only in users/vendors
+                    DatabaseReference vendorRef = FirebaseDatabase.getInstance()
+                            .getReference("users")
+                            .child("vendors")
+                            .child(uid); // make sure you have uid of this vendor
+
+                    vendorRef.child("phone_number").setValue(phone)
+                            .addOnCompleteListener(phoneTask -> {
+                                if (phoneTask.isSuccessful()) {
+                                    Toast.makeText(Vendor_Info.this, "Market info updated successfully!", Toast.LENGTH_SHORT).show();
+                                    startActivity(new Intent(Vendor_Info.this, MainActivity.class));
+                                    finish();
+                                } else {
+                                    Toast.makeText(Vendor_Info.this, "Failed to update phone number!", Toast.LENGTH_SHORT).show();
+                                }
+                            });
                 } else {
                     Toast.makeText(Vendor_Info.this, "Failed to update market info.", Toast.LENGTH_SHORT).show();
                 }
             });
         });
+
 
         // Check if info is completed (optional if you want to show dialog)
         boolean infoCheck = getIntent().getBooleanExtra("info_complete", true);

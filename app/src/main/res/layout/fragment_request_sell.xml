@@ -34,7 +34,8 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:hint="Quantity (e.g., 1 kg)"
-            android:inputType="textCapWords"
+            android:inputType="number"
+            android:digits="0123456789"
             android:layout_marginBottom="12dp"/>
 
         <EditText

@@ -1,6 +1,9 @@
 package com.example.loginappclone;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.Gravity;
 import android.view.View;
@@ -12,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -24,6 +28,7 @@ public class Market_Details extends AppCompatActivity {
     String vendorUID;
     String vendorName, marketName, barangay;
     DatabaseReference databaseRef;
+    ImageView callFunction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,28 +54,64 @@ public class Market_Details extends AppCompatActivity {
         TextView phoneNumber = findViewById(R.id.number);
         LinearLayout productList = findViewById(R.id.vendor_products_list);
 
-        // Load Market Info
+        callFunction = findViewById(R.id.callFunction);
+
+        // Call Function
+        databaseRef.child("users").child("vendors").child(vendorUID).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()){
+
+                    String phoneNumber = snapshot.child("phone_number").getValue(String.class);
+
+                    String formattedNumber;
+
+                    assert phoneNumber != null;
+                    if (phoneNumber.startsWith("+63")) {
+                        formattedNumber = "0" + phoneNumber.substring(3);
+                    } else if (!phoneNumber.startsWith("0")) {
+                        formattedNumber = "0" + phoneNumber;
+                    } else {
+                        formattedNumber = phoneNumber;
+                    }
+
+                    String finalFormattedNumber = formattedNumber;
+                    callFunction.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            makeCall(finalFormattedNumber);
+                        }
+                    });
+
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        // Load Market Info in market node
         databaseRef.child("markets").child(vendorUID)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot snapshot) {
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
                         if (snapshot.exists()) {
                             marketName = snapshot.child("marketName").getValue(String.class);
                             barangay = snapshot.child("barangay").getValue(String.class);
-                            String phone = snapshot.child("phoneNumber").getValue(String.class);
 
                             marketname.setText(marketName);
                             baranggay.setText(barangay);
-                            phoneNumber.setText(phone);
                         }
                     }
 
                     @Override
-                    public void onCancelled(DatabaseError error) {
+                    public void onCancelled(@NonNull DatabaseError error) {
                     }
                 });
 
-        // Load vendor username
+        // Load vendor username and phone number
         databaseRef.child("users").child("vendors").child(vendorUID)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -78,6 +119,20 @@ public class Market_Details extends AppCompatActivity {
                         if (snapshot.exists()) {
                             vendorName = snapshot.child("username").getValue(String.class);
 
+                            String phone = snapshot.child("phone_number").getValue(String.class);
+
+                            String formatted_phoneNumber;
+
+                            assert phone != null;
+                            if (phone.startsWith("+63")) {
+                                formatted_phoneNumber = "0" + phone.substring(3);
+                            } else if (!phone.startsWith("0")) {
+                                formatted_phoneNumber = "0" + phone;
+                            } else {
+                                formatted_phoneNumber = phone;
+                            }
+
+                            phoneNumber.setText(formatted_phoneNumber);
                             vendorname.setText(vendorName);
                         }
                     }
@@ -92,7 +147,7 @@ public class Market_Details extends AppCompatActivity {
         databaseRef.child("vendor_products").child(vendorUID)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
-                    public void onDataChange(DataSnapshot snapshot) {
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
                         productList.removeAllViews();
 
                         for (DataSnapshot productSnap : snapshot.getChildren()) {
@@ -122,6 +177,7 @@ public class Market_Details extends AppCompatActivity {
                             );
                             product_name.setLayoutParams(nameParams);
                             product_name.setText(productName);
+                            product_name.setTextSize(16);
                             product_name.setTextColor(getResources().getColor(R.color.white));
 
                             // Product Price + Unit
@@ -139,7 +195,7 @@ public class Market_Details extends AppCompatActivity {
                     }
 
                     @Override
-                    public void onCancelled(DatabaseError error) {
+                    public void onCancelled(@NonNull DatabaseError error) {
                     }
                 });
 
@@ -147,7 +203,7 @@ public class Market_Details extends AppCompatActivity {
         Button chatButton = findViewById(R.id.chat_button);
         chatButton.setOnClickListener(v -> {
             Intent intent = new Intent(Market_Details.this, Chat.class);
-            intent.putExtra("chatWith", vendorName);
+            intent.putExtra("chatWithUID", vendorUID);
             startActivity(intent);
         });
 
@@ -177,4 +233,39 @@ public class Market_Details extends AppCompatActivity {
                 startActivity(new Intent(Market_Details.this, Profile.class))
         );
     }
+
+    // Call method
+    private void makeCall(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            Toast.makeText(this, "Phone number not available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Intent intent = new Intent(Intent.ACTION_CALL);
+        intent.setData(Uri.parse("tel:" + phoneNumber));
+
+        // Check permission
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+            // Request permission
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CALL_PHONE}, 1);
+            return;
+        }
+
+        startActivity(intent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 1) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, you can retry the call
+                Toast.makeText(this, "Permission granted, tap again to call", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Call permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
 }

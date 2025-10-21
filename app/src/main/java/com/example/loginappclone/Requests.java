@@ -42,7 +42,8 @@ public class Requests extends AppCompatActivity {
         tabDeclined = findViewById(R.id.tabDeclined);
         listView = findViewById(R.id.listView);
 
-        currentUserUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        currentUserUID = sharedPreferences.getString("uid", null);
         requestsRef = FirebaseDatabase.getInstance().getReference("requests");
         marketsRef = FirebaseDatabase.getInstance().getReference("markets");
 

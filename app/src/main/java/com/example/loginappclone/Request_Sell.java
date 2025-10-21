@@ -1,7 +1,10 @@
 package com.example.loginappclone;
 
+import static android.content.Context.MODE_PRIVATE;
+
 import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -104,7 +107,7 @@ public class Request_Sell extends DialogFragment {
             String qtyStr = quantity.getText().toString().trim();
             String priceStr = price.getText().toString().trim();
             String date = deliveryDate.getText().toString().trim();
-            String paymentMethod = spinner.getSelectedItem().toString();
+            String paymentMethod = spinner.getSelectedItem().toString().trim();
 
             int selectedId = radioGroup.getCheckedRadioButtonId();
             if (selectedId == -1) {
@@ -145,8 +148,11 @@ public class Request_Sell extends DialogFragment {
     private void submitRequest(String name, String qtyStr, String priceStr, String date, String paymentMethod,
                                String pickUpOption, Double latitude, Double longitude) {
 
-        String currentUserUID = auth.getCurrentUser().getUid();
 
+        SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserSession", MODE_PRIVATE);
+        String currentUserUID = sharedPreferences.getString("uid", null);
+
+        assert currentUserUID != null;
         dbRef.child("users").child("farmers").child(currentUserUID)
                 .addListenerForSingleValueEvent(new ValueEventListener() {
                     @Override
@@ -157,11 +163,14 @@ public class Request_Sell extends DialogFragment {
                         }
 
                         String farmerName = snapshot.child("username").getValue(String.class);
-                        String phoneNumber = snapshot.child("phoneNumber").getValue(String.class);
+                        String phoneNumber = snapshot.child("phone_number").getValue(String.class);
                         String address = snapshot.child("address").getValue(String.class);
 
                         if (phoneNumber == null || phoneNumber.isEmpty() || address == null || address.isEmpty()) {
                             Toast.makeText(getContext(), "Please complete your profile info first", Toast.LENGTH_SHORT).show();
+                            Intent intent = new Intent(Request_Sell.this.getContext(), Farmers_Details.class);
+                            startActivity(intent);
+                            requireActivity().finish();
                             return;
                         }
 
@@ -175,12 +184,12 @@ public class Request_Sell extends DialogFragment {
                         requestRef.child("price").setValue(prc);
                         requestRef.child("deliveryDate").setValue(date);
                         requestRef.child("vendorUID").setValue(vendorUID);
-                        requestRef.child("vendorName").setValue(vendorName);
-                        requestRef.child("marketName").setValue(marketName);
+//                        requestRef.child("vendorName").setValue(vendorName);      // Data Normalization
+//                        requestRef.child("marketName").setValue(marketName);      // Data Normalization
                         requestRef.child("farmerUID").setValue(currentUserUID);
-                        requestRef.child("farmerName").setValue(farmerName);
-                        requestRef.child("phoneNumber").setValue(phoneNumber);
-                        requestRef.child("address").setValue(address);
+//                        requestRef.child("farmerName").setValue(farmerName);      // Data Normalization
+//                        requestRef.child("phoneNumber").setValue(phoneNumber);    // Data Normalization
+//                        requestRef.child("address").setValue(address);            // Data Normalization
                         requestRef.child("requestDate").setValue(timestamp);
                         requestRef.child("pickupOption").setValue(pickUpOption);
                         requestRef.child("paymentMethod").setValue(paymentMethod);

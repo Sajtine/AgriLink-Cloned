@@ -21,11 +21,11 @@ import java.util.Date;
 public class ChatList extends AppCompatActivity {
 
     ListView chatListView;
-    ArrayList<String> chatUsers;
+    TextView noChatsMessage;
+
+    ArrayList<String> chatUsersUIDs = new ArrayList<>();
     ChatUserAdapter adapter;
-    DatabaseReference dbRef;
-    String currentUser;
-    TextView noChatsMessage; // NEW
+    String currentUserUID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,78 +33,69 @@ public class ChatList extends AppCompatActivity {
         setContentView(R.layout.activity_chat_list);
 
         chatListView = findViewById(R.id.chatListView);
-        noChatsMessage = findViewById(R.id.noChatsMessage); // NEW
+        noChatsMessage = findViewById(R.id.noChatsMessage);
 
-        // Get current user
         SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
-        currentUser = prefs.getString("username", "Anonymous");
+        currentUserUID = prefs.getString("uid", "");
 
-        // Initialize adapter
-        chatUsers = new ArrayList<>();
-        adapter = new ChatUserAdapter(this, chatUsers);
+        adapter = new ChatUserAdapter(this, chatUsersUIDs);
         chatListView.setAdapter(adapter);
 
-        // Reference to Firebase
-        dbRef = FirebaseDatabase.getInstance().getReference("chats");
+        DatabaseReference chatsRef = FirebaseDatabase.getInstance().getReference("chats");
 
-        // Load chats
-        dbRef.addValueEventListener(new ValueEventListener() {
+        chatsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
-                chatUsers.clear();
+                chatUsersUIDs.clear();
                 ChatUserAdapter.lastMessages.clear();
                 ChatUserAdapter.lastMessageTimes.clear();
-                ChatUserAdapter.unreadCounts.clear(); // 🔴 Reset unread count map
+                ChatUserAdapter.unreadCounts.clear();
 
                 for (DataSnapshot chatRoom : snapshot.getChildren()) {
-                    String key = chatRoom.getKey();
+                    String otherUID = null;
+                    String latestMsg = "";
+                    long latestTime = 0;
+                    int unread = 0;
 
-                    if (key.contains(currentUser)) {
-                        String[] users = key.split("_");
-                        String otherUser = users[0].equals(currentUser) ? users[1] : users[0];
+                    for (DataSnapshot msgSnap : chatRoom.getChildren()) {
+                        Message msg = msgSnap.getValue(Message.class);
+                        if (msg == null) continue;
 
-                        if (!chatUsers.contains(otherUser)) {
-                            chatUsers.add(otherUser);
+                        if (msg.senderId.equals(currentUserUID)) {
+                            otherUID = msg.receiverId;
+                        } else if (msg.receiverId.equals(currentUserUID)) {
+                            otherUID = msg.senderId;
                         }
 
-                        Message latestMsg = null;
-                        int unreadCount = 0;
+                        if (otherUID == null) continue;
 
-                        for (DataSnapshot msgSnap : chatRoom.getChildren()) {
-                            Message msg = msgSnap.getValue(Message.class);
-
-                            if (msg != null &&
-                                    msg.senderId != null &&
-                                    msg.receiverId != null &&
-                                    (msg.senderId.equals(currentUser) || msg.receiverId.equals(currentUser))) {
-
-                                // Latest message logic
-                                if (latestMsg == null || msg.timestamp > latestMsg.timestamp) {
-                                    latestMsg = msg;
-                                }
-
-                                // Count unread messages sent to current user by the other user
-                                if (msg.receiverId.equals(currentUser) &&
-                                        msg.senderId.equals(otherUser) &&
-                                        !msg.isRead) {
-                                    unreadCount++;
-                                }
-                            }
+                        if (msg.timestamp > latestTime) {
+                            latestMsg = msg.message;
+                            latestTime = msg.timestamp;
                         }
 
-                        if (latestMsg != null) {
-                            ChatUserAdapter.lastMessages.put(otherUser, latestMsg.message);
-                            ChatUserAdapter.lastMessageTimes.put(otherUser, formatTime(latestMsg.timestamp));
+                        if (msg.receiverId.equals(currentUserUID) && !msg.isRead) {
+                            unread++;
                         }
+                    }
 
-                        ChatUserAdapter.unreadCounts.put(otherUser, unreadCount); // Save count
+                    if (otherUID != null && !chatUsersUIDs.contains(otherUID)) {
+                        chatUsersUIDs.add(otherUID);
+
+                        // Fetch username for display
+                        fetchUsername(otherUID);
+                    }
+
+                    if (otherUID != null) {
+                        ChatUserAdapter.lastMessages.put(otherUID, latestMsg);
+                        ChatUserAdapter.lastMessageTimes.put(otherUID, formatTime(latestTime));
+                        ChatUserAdapter.unreadCounts.put(otherUID, unread);
                     }
                 }
 
                 adapter.notifyDataSetChanged();
 
-                // ✅ Show or hide "No chats" message
-                if (chatUsers.isEmpty()) {
+                if (chatUsersUIDs.isEmpty()) {
                     noChatsMessage.setVisibility(TextView.VISIBLE);
                     chatListView.setVisibility(ListView.GONE);
                 } else {
@@ -114,17 +105,47 @@ public class ChatList extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(DatabaseError error) {
-                // Optional: handle error
-            }
+            public void onCancelled(DatabaseError error) {}
         });
 
-        // Open chat on item click
         chatListView.setOnItemClickListener((parent, view, position, id) -> {
-            String selectedUser = chatUsers.get(position);
+            String selectedUID = chatUsersUIDs.get(position);
             Intent intent = new Intent(ChatList.this, Chat.class);
-            intent.putExtra("chatWith", selectedUser);
+            intent.putExtra("chatWithUID", selectedUID);
             startActivity(intent);
+        });
+    }
+
+    private void fetchUsername(String uid) {
+        DatabaseReference farmersRef = FirebaseDatabase.getInstance()
+                .getReference("users/farmers/" + uid + "/username");
+        DatabaseReference vendorsRef = FirebaseDatabase.getInstance()
+                .getReference("users/vendors/" + uid + "/username");
+
+        farmersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snap) {
+                String username = snap.getValue(String.class);
+                if (username != null) {
+                    ChatUserAdapter.uidToUsername.put(uid, username);
+                    adapter.notifyDataSetChanged();
+                } else {
+                    vendorsRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(DataSnapshot snap2) {
+                            String username2 = snap2.getValue(String.class);
+                            ChatUserAdapter.uidToUsername.put(uid, username2 != null ? username2 : "Unknown");
+                            adapter.notifyDataSetChanged();
+                        }
+
+                        @Override
+                        public void onCancelled(DatabaseError error) {}
+                    });
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {}
         });
     }
 

@@ -1,5 +1,6 @@
 package com.example.loginappclone;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,6 +34,7 @@ public class Accepted_Products extends AppCompatActivity {
     DatabaseReference dbRef;
     String currentVendorUID;
     SimpleAdapter adapter;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,8 +45,9 @@ public class Accepted_Products extends AppCompatActivity {
         noOffersMessage = findViewById(R.id.noOffersMessage);
         approvedOfferList = new ArrayList<>();
 
+        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
         dbRef = FirebaseDatabase.getInstance().getReference("requests");
-        currentVendorUID = FirebaseAuth.getInstance().getCurrentUser().getUid(); // vendor UID
+        currentVendorUID = sharedPreferences.getString("uid", null); // vendor UID
 
         setupAdapter();
         loadApprovedOffers(); // Start listening for Firebase updates
@@ -52,7 +55,7 @@ public class Accepted_Products extends AppCompatActivity {
 
     private void loadApprovedOffers() {
         dbRef.child(currentVendorUID)
-                .addValueEventListener(new ValueEventListener() {  // 🔄 realtime listener
+                .addValueEventListener(new ValueEventListener() {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         approvedOfferList.clear();
@@ -62,28 +65,57 @@ public class Accepted_Products extends AppCompatActivity {
                                 String status = offerSnap.child("status").getValue(String.class);
 
                                 if ("Accepted".equalsIgnoreCase(status)) {
-                                    HashMap<String, String> map = new HashMap<>();
-                                    map.put("id", offerSnap.getKey()); // Firebase push ID
-                                    map.put("farmer", "👨‍🌾 " + offerSnap.child("farmerName").getValue(String.class));
-                                    map.put("product", "Product: " + offerSnap.child("productName").getValue(String.class));
-                                    map.put("price", "Price: ₱" + offerSnap.child("price").getValue(Integer.class) + " / kilo");
-                                    map.put("quantity", "Quantity: " + offerSnap.child("quantity").getValue(Integer.class) + " kilos");
-                                    map.put("delivery", "Delivery: " + offerSnap.child("deliveryDate").getValue(String.class));
-                                    map.put("status", status);
+                                    String farmerUID = offerSnap.child("farmerUID").getValue(String.class);
+                                    String productName = offerSnap.child("productName").getValue(String.class);
+                                    Integer price = offerSnap.child("price").getValue(Integer.class);
+                                    Integer quantity = offerSnap.child("quantity").getValue(Integer.class);
+                                    String deliveryDate = offerSnap.child("deliveryDate").getValue(String.class);
 
-                                    approvedOfferList.add(map);
+                                    if (farmerUID != null) {
+                                        // 🔍 Get farmer name from users/farmers/{farmerUID}
+                                        DatabaseReference farmerRef = FirebaseDatabase.getInstance()
+                                                .getReference("users")
+                                                .child("farmers")
+                                                .child(farmerUID);
+
+                                        farmerRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot farmerSnap) {
+                                                String farmerName = farmerSnap.child("username").getValue(String.class);
+                                                if (farmerName == null) farmerName = "Unknown Farmer";
+
+                                                HashMap<String, String> map = new HashMap<>();
+                                                map.put("id", offerSnap.getKey());
+                                                map.put("farmer", "👨‍🌾 " + farmerName);
+                                                map.put("product", "Product: " + productName);
+                                                map.put("price", "Price: ₱" + price + " / kilo");
+                                                map.put("quantity", "Quantity: " + quantity + " kilos");
+                                                map.put("delivery", "Delivery: " + deliveryDate);
+                                                map.put("status", status);
+
+                                                approvedOfferList.add(map);
+                                                adapter.notifyDataSetChanged();
+
+                                                // Hide "no offers" message if there are items
+                                                noOffersMessage.setVisibility(
+                                                        approvedOfferList.isEmpty() ? View.VISIBLE : View.GONE
+                                                );
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {
+                                                Toast.makeText(Accepted_Products.this, "Error loading farmer: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                                    }
                                 }
                             }
 
-                            adapter.notifyDataSetChanged();
-
-                            // ✅ Show "No Accepted Products" if none were found
                             if (approvedOfferList.isEmpty()) {
                                 noOffersMessage.setText("No Accepted Products at the moment.");
                                 noOffersMessage.setVisibility(View.VISIBLE);
-                            } else {
-                                noOffersMessage.setVisibility(View.GONE);
                             }
+
                         } else {
                             noOffersMessage.setText("No Accepted Products at the moment.");
                             noOffersMessage.setVisibility(View.VISIBLE);
@@ -96,6 +128,7 @@ public class Accepted_Products extends AppCompatActivity {
                     }
                 });
     }
+
 
     private void setupAdapter() {
         adapter = new SimpleAdapter(

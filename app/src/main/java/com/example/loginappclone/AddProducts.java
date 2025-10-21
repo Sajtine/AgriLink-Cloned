@@ -34,9 +34,9 @@ public class AddProducts extends AppCompatActivity {
         sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
 
         // Firebase reference for vendor_products
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String currentUser = sharedPreferences.getString("uid", null);
         if (currentUser != null) {
-            String vendorUID = currentUser.getUid();
+            String vendorUID = currentUser;
             vendorProductsRef = FirebaseDatabase.getInstance().getReference("vendor_products").child(vendorUID);
         } else {
             Toast.makeText(this, "Not logged in!", Toast.LENGTH_SHORT).show();
