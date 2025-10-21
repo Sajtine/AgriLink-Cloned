@@ -26,15 +26,31 @@
                 android:src="@drawable/agrilogo2" />
 
             <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_bar"
                 android:layout_width="280dp"
                 android:layout_height="40dp"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="140dp"
                 android:background="@drawable/roundcorners_reg"
                 android:queryHint="Search here ... "
-                android:theme="@style/CustomSearchView" />
+                android:theme="@style/CustomSearchView"/>
 
             <!-- Wrap messages icon with badge inside a FrameLayout -->
+
+            <TextView
+                android:id="@+id/text_qoute"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="140dp"
+                android:text="Empowering Farmers"
+                android:textColor="@android:color/white"
+                android:textSize="18sp"
+                android:fontFamily="@font/quicksandmeduim"
+                android:visibility="invisible"
+                />
+
+
             <FrameLayout
                 android:layout_width="48dp"
                 android:layout_height="48dp"
@@ -43,7 +59,6 @@
                 android:layout_marginEnd="40dp">
 
                 <!-- Badge Count -->
-
                 <ImageView
                     android:id="@+id/messages"
                     android:layout_width="30dp"

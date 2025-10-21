@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.loginappclone"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 4
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -35,8 +35,7 @@ android {
     }
 }
 
-dependencies {  
-
+dependencies {
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.2.0")
@@ -45,10 +44,6 @@ dependencies {
     implementation("com.google.android.gms:play-services-location:21.3.0")
     implementation("androidx.navigation:navigation-fragment:2.8.7")
     implementation("androidx.navigation:navigation-ui:2.8.7")
-    implementation(libs.firebase.database)
-    testImplementation("junit:junit:4.13.2")
-    androidTestImplementation("androidx.test.ext:junit:1.2.1")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     implementation("androidx.viewpager2:viewpager2:1.0.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.google.android.gms:play-services-maps:18.0.1")
@@ -58,9 +53,16 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
-    implementation(libs.mpandroidchart);
-    implementation("com.google.firebase:firebase-auth:21.0.1")
+    implementation(libs.mpandroidchart)
 
+    // ✅ Firebase BOM (manages versions automatically)
+    implementation(platform("com.google.firebase:firebase-bom:34.2.0"))
 
+    // ✅ Firebase dependencies (no version needed)
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-database")
 
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
 }

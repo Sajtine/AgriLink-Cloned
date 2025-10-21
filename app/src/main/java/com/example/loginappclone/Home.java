@@ -443,6 +443,12 @@ public class Home extends AppCompatActivity {
                     case "chayote":
                         cropImage.setImageResource(R.drawable.chayote);
                         break;
+                    case "eggplant":
+                        cropImage.setImageResource(R.drawable.eggplant);
+                        break;
+                    case "ampalaya":
+                        cropImage.setImageResource(R.drawable.ampalaya);
+                        break;
                     default:
                         cropImage.setImageResource(R.drawable.temp);
                         break;

@@ -7,7 +7,10 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="shade1_green">#00B251</color>
+    <color name="call_icon">#006A3A</color>
     <color name="shade2_blue">#2196F3</color>
+    <color name="gray">#9E9E9E</color>
+
     <!-- Light gray shadow -->
     <!-- White background or any color you choose -->
     <!-- example nice blue -->

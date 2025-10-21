@@ -55,8 +55,12 @@ import com.google.firebase.database.ValueEventListener;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 public class Market_Location extends AppCompatActivity implements OnMapReadyCallback {
 
@@ -178,7 +182,6 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
             mapFragment.getMapAsync(this);
         }
     }
-
 
 
     public void addFragment() {
@@ -313,6 +316,8 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
         }
     }
 
+
+    // Fetch markets base on the user municipality
     public void getMarket(String municipality, String productFilter) {
         if (municipality == null || municipality.isEmpty()) {
             Toast.makeText(this, "Municipality not found!", Toast.LENGTH_SHORT).show();
@@ -338,7 +343,6 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         progressBar.setVisibility(View.GONE);
-                        GridLayout gridLayout = findViewById(R.id.gridLayout);
                         gridLayout.removeAllViews();
                         gridLayout.setColumnCount(2);
 
@@ -349,13 +353,12 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                             return;
                         }
 
-                        int index = 0;
-                        final int[] matchedMarkets = {0}; // Track number of markets matching the product
+                        // List of markets (with distance)
+                        List<Map<String, Object>> marketList = new ArrayList<>();
 
                         for (DataSnapshot marketSnap : snapshot.getChildren()) {
                             String marketName = marketSnap.child("marketName").getValue(String.class);
                             String barangay = marketSnap.child("barangay").getValue(String.class);
-                            String phone_number = marketSnap.child("phoneNumber").getValue(String.class);
                             String vendorUID = marketSnap.getKey();
 
                             Double latitude, longitude;
@@ -366,6 +369,55 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                                 e.printStackTrace();
                                 continue;
                             }
+    
+                            // Calculate distance in km
+                            Location userLoc = new Location("");
+                            userLoc.setLatitude(userLat);
+                            userLoc.setLongitude(userLong);
+                            Location marketLoc = new Location("");
+                            marketLoc.setLatitude(latitude);
+                            marketLoc.setLongitude(longitude);
+                            float distance = userLoc.distanceTo(marketLoc) / 1000;
+
+                            // Only keep markets within 10 km
+                            if (distance <= 10.0) {
+                                Map<String, Object> marketData = new HashMap<>();
+                                marketData.put("marketName", marketName);
+                                marketData.put("barangay", barangay);
+                                marketData.put("vendorUID", vendorUID);
+                                marketData.put("latitude", latitude);
+                                marketData.put("longitude", longitude);
+                                marketData.put("distance", distance);
+                                marketList.add(marketData);
+                            }
+                        }
+
+                        if (marketList.isEmpty()) {
+                            Toast.makeText(Market_Location.this,
+                                    "No nearby markets within 10km.", Toast.LENGTH_SHORT).show();
+                            retryButton.setVisibility(View.VISIBLE);
+                            return;
+                        }
+
+                        // Sort by distance
+                        Collections.sort(marketList, new Comparator<Map<String, Object>>() {
+                            @Override
+                            public int compare(Map<String, Object> m1, Map<String, Object> m2) {
+                                return Float.compare((float) (double) m1.get("distance"),
+                                        (float) (double) m2.get("distance"));
+                            }
+                        });
+
+                        // Display sorted markets
+                        final int[] index = {0};
+                        final int[] matchedMarkets = {0};
+
+                        for (Map<String, Object> market : marketList) {
+                            String marketName = (String) market.get("marketName");
+                            String barangay = (String) market.get("barangay");
+                            String vendorUID = (String) market.get("vendorUID");
+                            double latitude = (double) market.get("latitude");
+                            double longitude = (double) market.get("longitude");
 
                             LatLng marketLocation = new LatLng(latitude, longitude);
                             Marker marketMarker = gmap.addMarker(new MarkerOptions()
@@ -374,11 +426,11 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                                     .icon(BitmapDescriptorFactory.fromResource(R.drawable.market_logo)));
                             markerList.add(marketMarker);
 
+                            int finalIndex = index[0];
                             DatabaseReference vendorProductsRef = FirebaseDatabase.getInstance()
                                     .getReference("vendor_products")
                                     .child(vendorUID);
 
-                            int finalIndex = index;
                             vendorProductsRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot productsSnapshot) {
@@ -396,14 +448,15 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
 
                                     if (hasProduct) {
                                         matchedMarkets[0]++;
-                                        createMarketCard(gridLayout, finalIndex, vendorUID, marketName,
-                                                barangay, phone_number, latitude, longitude, marketLocation, marketMarker);
+                                        createMarketCard(gridLayout, finalIndex, vendorUID,
+                                                marketName, barangay,
+                                                latitude, longitude,
+                                                marketLocation, marketMarker);
                                     } else {
                                         marketMarker.remove();
                                     }
 
-                                    // After all markets processed, check if any matched
-                                    if (finalIndex == snapshot.getChildrenCount() - 1) {
+                                    if (finalIndex == marketList.size() - 1) {
                                         if (matchedMarkets[0] == 0) {
                                             Toast.makeText(Market_Location.this,
                                                     "No markets found for product: " + productFilter,
@@ -417,7 +470,7 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                                 public void onCancelled(@NonNull DatabaseError error) {}
                             });
 
-                            index++;
+                            index[0]++;
                         }
                     }
 
@@ -431,9 +484,9 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
     }
 
 
+
     private void createMarketCard(GridLayout gridLayout, int index, String vendorUID,
-                                  String marketName, String barangay, String phoneNumber,
-                                  double latitude, double longitude, LatLng marketLocation,
+                                  String marketName, String barangay, double latitude, double longitude, LatLng marketLocation,
                                   Marker marketMarker) {
 
         CardView cardView = new CardView(this);

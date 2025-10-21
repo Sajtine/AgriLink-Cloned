@@ -84,7 +84,7 @@ public class Vendor extends AppCompatActivity {
 
                     Intent intent = new Intent(Vendor.this, MainActivity.class);
                     startActivity(intent);
-                    finish(); // Optional: end current activity on logout
+                    finish();
                 }
             }, 250); // delay in milliseconds (adjust if needed)
 
@@ -145,7 +145,7 @@ public class Vendor extends AppCompatActivity {
     // Notification Badge for unread messages
     private void checkUnreadMessages() {
         SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
-        String currentUser = prefs.getString("username", "");
+        String currentUserUID = prefs.getString("uid", "");
 
         DatabaseReference chatsRef = FirebaseDatabase.getInstance().getReference("chats");
 
@@ -157,7 +157,7 @@ public class Vendor extends AppCompatActivity {
                 for(DataSnapshot roomSnap : snapshot.getChildren()){
                     for (DataSnapshot msgSnap : roomSnap.getChildren()){
                         Message msg = msgSnap.getValue(Message.class);
-                        if (msg != null && msg.receiverId.equals(currentUser) && !msg.isRead) {
+                        if (msg != null && msg.receiverId.equals(currentUserUID) && !msg.isRead) {
                             unreadCount++;
                         }
                     }

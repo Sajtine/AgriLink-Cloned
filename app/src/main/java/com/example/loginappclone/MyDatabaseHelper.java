@@ -8,12 +8,18 @@
     import android.database.Cursor;
     import android.database.sqlite.SQLiteDatabase;
     import android.database.sqlite.SQLiteOpenHelper;
+    import android.util.Log;
     import android.widget.Toast;
+
+    import androidx.annotation.NonNull;
 
     import com.google.firebase.auth.FirebaseAuth;
     import com.google.firebase.auth.FirebaseUser;
+    import com.google.firebase.database.DataSnapshot;
+    import com.google.firebase.database.DatabaseError;
     import com.google.firebase.database.DatabaseReference;
     import com.google.firebase.database.FirebaseDatabase;
+    import com.google.firebase.database.ValueEventListener;
 
     import java.util.ArrayList;
     import java.util.HashMap;
@@ -215,42 +221,177 @@
 
 //        -------------------------------------- Firebase Functions --------------------------------------------
 
-        // Register User with Firebase
-        // Save user data in the firebase
-        public void registerUser(String username, String phoneNumber, String userRole, Context context) {
+        // Register User with Firebase and save data inside Firebase
+        public void registerUser(String username, String phoneNumber, String userRole, String password, Context context) {
             FirebaseDatabase database = FirebaseDatabase.getInstance();
+            DatabaseReference rootRef = database.getReference("users");
             String rolePath = userRole.equalsIgnoreCase("farmer") ? "farmers" : "vendors";
 
-            String formattedNumber = phoneNumber;
-
-            if(phoneNumber.startsWith("0")){
+            // Format Philippine number
+            String formattedNumber;
+            if (phoneNumber.startsWith("0")) {
                 formattedNumber = "+63" + phoneNumber.substring(1);
-            }else if(!phoneNumber.startsWith("+63")){
+            } else if (!phoneNumber.startsWith("+63")) {
                 formattedNumber = "+63" + phoneNumber;
+            } else {
+                formattedNumber = phoneNumber;
             }
 
-            String uid = formattedNumber;
+            // Generate a unique UID for this user
+            String userUID = rootRef.push().getKey();
+            if (userUID == null) {
+                Toast.makeText(context, "Failed to generate user ID", Toast.LENGTH_SHORT).show();
+                return;
+            }
 
-            DatabaseReference userRef = database.getReference("users").child(rolePath).child(uid);
+            // Check if phone already exists in BOTH farmers and vendors
+            rootRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                    boolean phoneExists = false;
 
-            Map<String, Object> userData = new HashMap<>();
-            userData.put("username", username);
-            userData.put("phone_number", formattedNumber);
-            userData.put("userRole", userRole.toLowerCase());
-
-            userRef.setValue(userData)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show();
-
-                        Intent intent = new Intent(context, MainActivity.class);
-                        context.startActivity(intent);
-
-                        if (context instanceof Activity) {
-                            ((Activity) context).finish();
+                    // Check farmers
+                    for (DataSnapshot farmerSnap : snapshot.child("farmers").getChildren()) {
+                        String existingPhone = farmerSnap.child("phone_number").getValue(String.class);
+                        if (formattedNumber.equals(existingPhone)) {
+                            phoneExists = true;
+                            Toast.makeText(context, "Phone number already registered as Farmer!", Toast.LENGTH_SHORT).show();
+                            break;
                         }
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(context, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    }
+
+                    // Check vendors only if not found in farmers
+                    if (!phoneExists) {
+                        for (DataSnapshot vendorSnap : snapshot.child("vendors").getChildren()) {
+                            String existingPhone = vendorSnap.child("phone_number").getValue(String.class);
+                            if (formattedNumber.equals(existingPhone)) {
+                                phoneExists = true;
+                                Toast.makeText(context, "Phone number already registered as Vendor!", Toast.LENGTH_SHORT).show();
+                                break;
+                            }
+                        }
+                    }
+
+                    // If phone doesn’t exist. Register new user
+                    if (!phoneExists) {
+                        DatabaseReference userRef = rootRef.child(rolePath).child(userUID);
+
+                        Map<String, Object> userData = new HashMap<>();
+                        userData.put("username", username);
+                        userData.put("phone_number", formattedNumber);
+                        userData.put("userRole", userRole.toLowerCase());
+                        userData.put("password", password);
+
+                        userRef.setValue(userData)
+                                .addOnSuccessListener(aVoid -> {
+                                    Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show();
+                                    Intent intent = new Intent(context, MainActivity.class);
+                                    context.startActivity(intent);
+                                    if (context instanceof Activity) {
+                                        ((Activity) context).finish();
+                                    }
+                                })
+                                .addOnFailureListener(e -> Toast.makeText(context, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                    }
+                }
+
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {}
+            });
         }
+
+
+        // Log in
+        public void loginUser(String phoneNumber, String password) {
+
+            DatabaseReference rootRef = FirebaseDatabase.getInstance().getReference("users");
+
+            String formattedNumber;
+
+            // Format Philippine number
+            if (phoneNumber.startsWith("0")) {
+                formattedNumber = "+63" + phoneNumber.substring(1);
+            } else if (!phoneNumber.startsWith("+63")) {
+                formattedNumber = "+63" + phoneNumber;
+            } else {
+                formattedNumber = phoneNumber;
+            }
+
+            // Check in "farmers" first
+            rootRef.child("farmers")
+                    .orderByChild("phone_number")
+                    .equalTo(formattedNumber)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                for (DataSnapshot userSnap : snapshot.getChildren()) {
+                                    String uid = userSnap.getKey();
+                                    checkPassword(userSnap, password, "farmers", uid);
+                                    return;
+                                }
+                            } else {
+                                // Check in "vendors" if not found in farmers
+                                rootRef.child("vendors")
+                                        .orderByChild("phone_number")
+                                        .equalTo(formattedNumber)
+                                        .addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                                if (snapshot.exists()) {
+                                                    for (DataSnapshot userSnap : snapshot.getChildren()) {
+                                                        String uid = userSnap.getKey();
+                                                        checkPassword(userSnap, password, "vendors", uid);
+                                                        return;
+                                                    }
+                                                } else {
+                                                    Toast.makeText(context, "User not Found!", Toast.LENGTH_SHORT).show();
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError error) {
+                                                Toast.makeText(context, "Database Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                                            }
+                                        });
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                            Toast.makeText(context, "Database Error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        }
+
+        // Check password
+        private void checkPassword(DataSnapshot snapshot, String userPassword, String role, String uid) {
+            String password = snapshot.child("password").getValue(String.class);
+
+            if (userPassword.equals(password)) {
+                Toast.makeText(context, "Login Successfully!", Toast.LENGTH_SHORT).show();
+
+                // Store user login to shared preferences
+                SharedPreferences sharedPreferences = context.getSharedPreferences("UserSession", Context.MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString("uid", uid);
+                editor.putString("role", role);
+                editor.apply();
+
+                if (role.equals("farmers")) {
+                    context.startActivity(new android.content.Intent(context, Home.class));
+                } else {
+                    android.content.Intent intent = new android.content.Intent(context, Vendor.class);
+                    context.startActivity(intent);
+                    Log.d("Vendor UID", uid);
+                }
+
+            } else {
+                Toast.makeText(context, "Incorrect Password!", Toast.LENGTH_SHORT).show();
+            }
+        }
+
+
 
 
         // Optional SQLite save for offline login
@@ -263,91 +404,6 @@
             values.put(COLUMN_PASSWORD, password);
             db.insert(TABLE_NAME, null, values);
             db.close();
-        }
-
-
-        // Login in Firebase
-        public void loginUser(String email, String password, Context context) {
-            FirebaseAuth auth = FirebaseAuth.getInstance();
-
-            auth.signInWithEmailAndPassword(email, password)
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful()) {
-                            FirebaseUser user = auth.getCurrentUser();
-                            if (user != null) {
-                                String uid = user.getUid();
-
-                                // Get user extra info from Realtime Database
-                                fetchUserInfoAndNavigate(uid, context);
-                            }
-                        } else {
-                            Toast.makeText(context, "Incorrect email or password", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-        }
-
-        // Navigate user to the page base on the user role
-        private void fetchUserInfoAndNavigate(String uid, Context context) {
-            DatabaseReference userRefFarmers = FirebaseDatabase.getInstance()
-                    .getReference("users/farmers").child(uid);
-
-            userRefFarmers.get().addOnCompleteListener(task -> {
-                if (task.isSuccessful() && task.getResult().exists()) {
-                    // Farmer found, proceed as usual...
-                    Map<String, Object> userData = (Map<String, Object>) task.getResult().getValue();
-                    String username = (String) userData.get("username");
-                    String userRole = (String) userData.get("userRole");
-
-                    saveUserSession(uid, username, userRole, context);
-                    Toast.makeText(context, "Welcome back, " + username, Toast.LENGTH_SHORT).show();
-
-                    Intent intent = new Intent(context, Home.class);
-                    context.startActivity(intent);
-
-                } else {
-                    // Not farmer, check vendors
-                    DatabaseReference userRefVendors = FirebaseDatabase.getInstance()
-                            .getReference("users/vendors").child(uid);
-
-                    userRefVendors.get().addOnCompleteListener(vendorTask -> {
-                        if (vendorTask.isSuccessful() && vendorTask.getResult().exists()) {
-                            Map<String, Object> userData = (Map<String, Object>) vendorTask.getResult().getValue();
-                            String username = (String) userData.get("username");
-                            String userRole = (String) userData.get("userRole");
-
-                            saveUserSession(uid, username, userRole, context);
-                            Toast.makeText(context, "Welcome back, " + username, Toast.LENGTH_SHORT).show();
-
-                            // Now check markets node for infoComplete flag
-                            DatabaseReference marketRef = FirebaseDatabase.getInstance()
-                                    .getReference("markets").child(uid);
-
-                            marketRef.get().addOnCompleteListener(marketTask -> {
-                                if (marketTask.isSuccessful() && marketTask.getResult().exists()) {
-                                    Boolean infoComplete = marketTask.getResult().child("infoComplete").getValue(Boolean.class);
-                                    if (infoComplete != null && infoComplete) {
-                                        // Info complete → proceed to Vendor main screen
-                                        Intent intent = new Intent(context, Vendor.class);
-                                        context.startActivity(intent);
-                                    } else {
-                                        // Info incomplete → redirect to Vendor_Info activity
-                                        Intent intent = new Intent(context, Vendor_Info.class);
-                                        context.startActivity(intent);
-                                    }
-                                } else {
-                                    // markets node missing or error, treat as incomplete
-                                    Intent intent = new Intent(context, Vendor_Info.class);
-                                    intent.putExtra("info_complete", false);
-                                    context.startActivity(intent);
-                                }
-                            });
-
-                        } else {
-                            Toast.makeText(context, "User data not found", Toast.LENGTH_SHORT).show();
-                        }
-                    });
-                }
-            });
         }
 
 

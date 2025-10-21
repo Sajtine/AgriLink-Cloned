@@ -49,10 +49,30 @@ public class Chat extends AppCompatActivity {
 
         // Get current user from SharedPreferences
         SharedPreferences prefs = getSharedPreferences("UserSession", MODE_PRIVATE);
-        currentUser = prefs.getString("username", "Anonymous");
+        currentUser = prefs.getString("uid", "Anonymous");
 
         // Get person to chat with
-        chatWith = getIntent().getStringExtra("chatWith");
+        chatWith = getIntent().getStringExtra("chatWithUID");
+
+        // Fetch username to display in toolbar
+        DatabaseReference userRef = FirebaseDatabase.getInstance()
+                .getReference("users")
+                .child(chatWith)
+                .child("username");
+
+        userRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String username = snapshot.getValue(String.class);
+                if (getSupportActionBar() != null) {
+                    getSupportActionBar().setTitle(username != null ? username : "Chat");
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(true); // back arrow
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {}
+        });
 
         // Generate chatRoom name
         chatRoom = currentUser.compareTo(chatWith) < 0
@@ -60,13 +80,6 @@ public class Chat extends AppCompatActivity {
                 : chatWith + "_" + currentUser;
 
         dbRef = FirebaseDatabase.getInstance().getReference("chats").child(chatRoom);
-
-        // condition
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setTitle(chatWith);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true); // Enables back arrow
-        }
-
 
         messages = new ArrayList<>();
 

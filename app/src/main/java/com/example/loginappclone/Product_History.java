@@ -1,5 +1,6 @@
 package com.example.loginappclone;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -30,6 +31,7 @@ public class Product_History extends AppCompatActivity {
 
     DatabaseReference requestsRef;
     String vendorUID;
+    SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +46,8 @@ public class Product_History extends AppCompatActivity {
         back.setOnClickListener(v -> finish());
 
         // Get vendor UID (current logged-in Firebase user)
-        vendorUID = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
+        vendorUID = sharedPreferences.getString("uid", null);
         requestsRef = FirebaseDatabase.getInstance().getReference("requests").child(vendorUID);
 
         loadReceivedProductHistory();

@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="16dp"
     android:background="#ffffff">
+
 
     <TextView
         android:id="@+id/titleText"
@@ -16,14 +15,30 @@
         android:textStyle="bold"
         android:textColor="#4CAF50"
         android:gravity="center"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginBottom="16dp"
+        android:layout_alignParentTop="true" />
+
 
     <ListView
         android:id="@+id/offersListView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/backButton"
+        android:layout_below="@id/titleText"
         android:dividerHeight="12dp" />
+
+
+    <TextView
+        android:id="@+id/emptyView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:text="No offers available."
+        android:textSize="16sp"
+        android:visibility="gone"
+        android:padding="20dp"/>
+
 
     <Button
         android:id="@+id/backButton"
@@ -32,5 +47,7 @@
         android:text="Back"
         android:backgroundTint="@color/shade1_green"
         android:textColor="#FFFFFF"
+        android:layout_alignParentBottom="true"
         android:layout_marginTop="12dp" />
-</LinearLayout>
+
+</RelativeLayout>
