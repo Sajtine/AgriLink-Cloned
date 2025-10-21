@@ -403,10 +403,17 @@ public class Market_Location extends AppCompatActivity implements OnMapReadyCall
                         Collections.sort(marketList, new Comparator<Map<String, Object>>() {
                             @Override
                             public int compare(Map<String, Object> m1, Map<String, Object> m2) {
-                                return Float.compare((float) (double) m1.get("distance"),
-                                        (float) (double) m2.get("distance"));
+                                // Safely convert any numeric type (Float, Double, Long, etc.)
+                                Number n1 = (Number) m1.get("distance");
+                                Number n2 = (Number) m2.get("distance");
+
+                                float d1 = n1.floatValue();
+                                float d2 = n2.floatValue();
+
+                                return Float.compare(d1, d2);
                             }
                         });
+
 
                         // Display sorted markets
                         final int[] index = {0};
