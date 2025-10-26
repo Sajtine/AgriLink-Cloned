@@ -73,7 +73,7 @@ public class AddProducts extends AppCompatActivity {
                 return;
             }
 
-            // Convert price to integer (since you said price is Integer in Firebase)
+            // Convert price to integer
             int price;
             try {
                 price = Integer.parseInt(priceText);

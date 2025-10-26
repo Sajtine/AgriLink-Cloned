@@ -175,7 +175,6 @@
 //            addTemporaryMarket(db);
 
 
-
             // Add crops data to the table
             db.execSQL("INSERT INTO " + TABLE_CROPS + " (" + COLUMN_CROP_NAME + ", " + COLUMN_CROP_PLANTING_MONTHS + ") VALUES " +
                     "('Rice', '6,7,8,9')," +
@@ -457,312 +456,312 @@
         }
 
         // Update User Details or Farmer Details
-        public boolean updateFarmerDetails(String email, String newName, String newAddress, String newPhone_number){
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-
-            values.put("username", newName);
-            values.put("address", newAddress);
-            values.put("phone_number", newPhone_number);
-
-            int rowsAffected = db.update("users", values, "email = ?", new String[]{email});
-            return rowsAffected > 0;
-
-        }
-
-        // Get Market Details by Municipality (or any other field)
-        public Cursor getMarketDetails(String municipality, String productFilter) {
-            SQLiteDatabase db = this.getReadableDatabase();
-
-            if (productFilter.equals("All")){
-                return db.rawQuery(
-                        "SELECT * FROM markets WHERE municipality = ?",
-                        new String[]{municipality}
-                );
-            }else{
-                return db.rawQuery(
-                        "SELECT m.* FROM markets m " +
-                                "JOIN vendor_products vp ON m.vendor_id = vp.vendor_product_id " +
-                                "WHERE m.municipality = ? AND vp.vendor_product_name = ?",
-                        new String[]{municipality, productFilter}
-                );
-            }
-        }
-
-
-        // Method to store request in the db
-        public boolean insertRequest(String product_name, int quantity, double price, String delivery_date, int vendor_id, int farmer_id, String farmer_name, String phone_number, String request_date, String pickUpOption, String paymentMethod){
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-
-            values.put("vendor_id", vendor_id);
-            values.put("product_name", product_name);
-            values.put("quantity", quantity);
-            values.put("price", price);
-            values.put("delivery_date", delivery_date);
-            values.put("farmer_id", farmer_id);
-            values.put("farmer_name", farmer_name);
-            values.put("farmer_number", phone_number);
-            values.put("request_date", request_date);
-            values.put("pickup_option", pickUpOption);
-            values.put("payment_method", paymentMethod);
-
-            long result = db.insert(TABLE_PRODUCT_OFFERS, null, values);
-            return result != -1;
-        }
-
-        // Check if vendor is already in the markets table
-        public boolean isVendorInMarkets(String vendorId) {
-            SQLiteDatabase db = this.getReadableDatabase();
-            Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_MARKETS + " WHERE " + COLUMN_MARKET_VENDOR_ID + "=?", new String[]{vendorId});
-            boolean exists = cursor.moveToFirst();
-            cursor.close();
-            return exists;
-        }
-
-        // Add vendor to markets table
-        public void addVendorToMarkets(int vendorId, String vendorName) {
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-
-            values.put(COLUMN_MARKET_VENDOR_ID, vendorId);
-            values.put(COLUMN_MARKET_VENDOR, vendorName);
-
-            // Optional: you can set default values for other fields like name/street/phone
-            db.insert(TABLE_MARKETS, null, values);
-            db.close();
-        }
-
-        // Get farmers offer
-        public Cursor getAllFarmerOffers(int vendorId) {
-            SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT id, farmer_name, farmer_number, product_name, price, quantity, delivery_date FROM " + TABLE_PRODUCT_OFFERS  + " WHERE status = 'Pending' AND  vendor_id = ?";
-            return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
-        }
-
-        // Get all prodcuts received by the vendor
-        public Cursor getAllReceivedProducts(int vendorId){
-            SQLiteDatabase db = this.getReadableDatabase();
-            String query = "SELECT id, farmer_name, farmer_number, product_name, price, quantity, status, received_date FROM " + TABLE_PRODUCT_OFFERS +  " WHERE status = 'Received' AND vendor_id = ?";
-            return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
-        }
-
-        // Get products sold by vendor
-        public Cursor getVendorProductsSold(int vendorId) {
-            SQLiteDatabase db = this.getReadableDatabase();
-            return db.rawQuery("SELECT * FROM vendor_products WHERE vendor_product_id = ?", new String[]{String.valueOf(vendorId)});
-        }
-
-        // Get market info
-        public Cursor getMarketInfoByVendorId(int vendorId) {
-            SQLiteDatabase db = this.getReadableDatabase();
-            return db.rawQuery(
-                    "SELECT name, street, barangay, phone, municipality, longitude, latitude FROM markets WHERE vendor_id = ?",
-                    new String[]{String.valueOf(vendorId)}
-            );
-        }
-
-
-        // Update market info
-        public boolean updateMarketInfo(int vendorId, String name, String street, String barangay, String phone, String municipality, String longitude, String latitude) {
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-
-            values.put("name", name);
-            values.put("street", street);
-            values.put("barangay", barangay);
-            values.put("phone", phone);
-            values.put("municipality", municipality);
-            values.put("longitude", longitude);
-            values.put("latitude", latitude);
-
-            int rowsAffected = db.update("markets", values, "vendor_id = ?", new String[]{String.valueOf(vendorId)});
-            db.close();
-
-            return rowsAffected > 0;
-        }
-
-        // Get status of the requests or the farmers offer status
-        public ArrayList<HashMap<String, String>> getProductOffersByStatus(String status, int farmerId) {
-            ArrayList<HashMap<String, String>> offerList = new ArrayList<>();
-            SQLiteDatabase db = this.getReadableDatabase();
-
-            // JOIN product_offers with markets using vendor_id
-            String query = "SELECT po.*, m." + COLUMN_MARKET_NAME + ", m." + COLUMN_MARKET_BARANGGAY +
-                    " FROM " + TABLE_PRODUCT_OFFERS + " po " +
-                    "INNER JOIN " + TABLE_MARKETS + " m ON po." + COLUMN_VENDOR_ID + " = m." + COLUMN_MARKET_VENDOR_ID +
-                    " WHERE po." + COLUMN_STATUS + " = ? AND po." + COLUMN_FARMER_ID + " = ?";
-
-            Cursor cursor = db.rawQuery(query, new String[]{status, String.valueOf(farmerId)});
-
-            if (cursor.moveToFirst()) {
-                do {
-                    HashMap<String, String> offer = new HashMap<>();
-                    offer.put("id", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_OFFER_ID)));
-                    offer.put("vendor_id", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_VENDOR_ID)));
-                    offer.put("farmer_id", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FARMER_ID)));
-                    offer.put("farmer_name", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FARMER_NAME)));
-                    offer.put("product_name", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_NAME)));
-                    offer.put("quantity", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_QUANTITY)));
-                    offer.put("price", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRICE)));
-                    offer.put("delivery_date", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DELIVERY_DATE)));
-                    offer.put("status", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATUS)));
-                    offer.put("request_date", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_REQUEST_DATE)));
-
-                    // Market Info (from join)
-                    offer.put("market_name", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MARKET_NAME)));
-                    offer.put("vendor_barangay", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MARKET_BARANGGAY)));
-
-                    offerList.add(offer);
-                } while (cursor.moveToNext());
-            }
-
-            cursor.close();
-            db.close();
-            return offerList;
-        }
-
-
-        // Approved Products or Accepted Products
-        public Cursor getApprovedOffersByVendor(int vendorId) {
-            SQLiteDatabase db = this.getReadableDatabase();
-
-            // Query to select only approved offers for the given vendorId
-            String query = "SELECT * FROM " + TABLE_PRODUCT_OFFERS + " WHERE " +
-                    COLUMN_VENDOR_ID + " = ? AND " +
-                    COLUMN_STATUS + " = 'Accepted'";  //
-
-            return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
-        }
-
-
-        // Update Products by vendor or the status (Accept and Decline)
-        public void updateOfferStatus(int offerId, String newStatus) {
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            values.put("status", newStatus);  // Assuming your table has a "status" column
-
-            // Update the status of the offer by offerId
-            db.update("product_offers", values, COLUMN_PRODUCT_OFFER_ID + " = ?", new String[]{String.valueOf(offerId)});
-        }
-
-        // For received status and the date
-        public void markOfferAsReceived(int offerId, String currentDate){
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            values.put("status", "Received");
-            values.put("received_date", currentDate);
-
-            db.update("product_offers", values, COLUMN_PRODUCT_OFFER_ID + " =?", new String[]{String.valueOf(offerId)});
-        }
-
-        // Get crops by month
-        public Cursor getCropsForMonth(int month) {
-            SQLiteDatabase db = this.getReadableDatabase();
-
-            String[] selectionArgs = { "%" + month + "%"};
-
-            Cursor cursor = db.rawQuery(
-                    "SELECT " + COLUMN_CROP_NAME +
-                    " FROM " + TABLE_CROPS +
-                    " WHERE " + COLUMN_CROP_PLANTING_MONTHS + " LIKE ?",
-                    selectionArgs
-            );
-
-            return cursor;
-        }
-
-        // Add vendors products
-        public boolean addVendorProducts(String product_name, double product_price, String product_unit, int vendor_id){
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-
-            // To check if the product already exists
-            String query = "SELECT * FROM " + TABLE_VENDOR_PRODUCTS +
-                    " WHERE LOWER(vendor_product_name) = LOWER(?) AND vendor_product_id = ?";
-            Cursor cursor = db.rawQuery(query, new String[]{product_name, String.valueOf(vendor_id)});
-
-            if(cursor.getCount() > 0) {
-                cursor.close();
-                return false;
-            }
-
-            values.put("vendor_product_name", product_name);
-            values.put("vendor_product_price", product_price);
-            values.put("product_unit", product_unit);
-            values.put("vendor_product_id", vendor_id);
-
-            long result = db.insert(TABLE_VENDOR_PRODUCTS, null, values);
-
-            return result != -1;
-
-        }
-
-        // Retrieve the products by vendor
-        public ArrayList<String> getVendorProducts(int vendorId) {
-            ArrayList<String> products = new ArrayList<>();
-            SQLiteDatabase db = this.getReadableDatabase();
-            Cursor cursor = db.rawQuery("SELECT vendor_product_name, vendor_product_price, product_unit FROM vendor_products WHERE vendor_product_id = ?", new String[]{String.valueOf(vendorId)});
-
-            if (cursor.moveToFirst()) {
-                do {
-                    String name = cursor.getString(0);
-                    double price = cursor.getDouble(1);
-                    String unit = cursor.getString(2);
-                    products.add(name + " - ₱" + price + "/" + unit);
-                } while (cursor.moveToNext());
-            }
-
-            cursor.close();
-            db.close();
-            return products;
-        }
-
-        // update vendor products
-        public boolean updateVendorProduct(int vendorId, String oldName, String newName, String newPrice, String newUnit) {
-            SQLiteDatabase db = this.getWritableDatabase();
-            ContentValues values = new ContentValues();
-            values.put("vendor_product_name", newName);
-            values.put("vendor_product_price", Double.parseDouble(newPrice));
-            values.put("product_unit", newUnit);
-
-            int rowsAffected = db.update("vendor_products", values, "vendor_product_id = ? AND vendor_product_name = ?", new String[]{String.valueOf(vendorId), oldName});
-
-            return rowsAffected > 0;
-
-        }
-
-        // delete product of the vendor
-        public boolean deleteVendorProduct(int vendorId, String productName) {
-            SQLiteDatabase db = this.getWritableDatabase();
-
-            int result = db.delete(
-                    "vendor_products",
-                    "vendor_product_id = ? AND vendor_product_name = ? COLLATE NOCASE",
-                    new String[]{String.valueOf(vendorId), productName}
-            );
-
-            return result > 0;
-        }
-
-
-        // vendor checking for info filled up
-        public boolean isVendorInfoComplete(int vendorId){
-            SQLiteDatabase db = this.getReadableDatabase();
-
-            Cursor cursor = db.rawQuery(
-                    "SELECT * FROM " + TABLE_MARKETS +
-                            " WHERE " + COLUMN_MARKET_VENDOR_ID + " = ?" +
-                            " AND " + COLUMN_MARKET_NAME + " IS NOT NULL AND " + COLUMN_MARKET_NAME + " != ''" +
-                            " AND " + COLUMN_MARKET_STREET + " IS NOT NULL AND " + COLUMN_MARKET_STREET + " != ''" +
-                            " AND " + COLUMN_MARKET_BARANGGAY + " IS NOT NULL AND " + COLUMN_MARKET_BARANGGAY + " != ''" +
-                            " AND " + COLUMN_MARKET_MUNICIPALITY + " IS NOT NULL AND " + COLUMN_MARKET_MUNICIPALITY + " != ''",
-                    new String[]{String.valueOf(vendorId)}
-            );
-
-            boolean isComplete = cursor.moveToFirst();
-            return isComplete;
-        }
+//        public boolean updateFarmerDetails(String email, String newName, String newAddress, String newPhone_number){
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//
+//            values.put("username", newName);
+//            values.put("address", newAddress);
+//            values.put("phone_number", newPhone_number);
+//
+//            int rowsAffected = db.update("users", values, "email = ?", new String[]{email});
+//            return rowsAffected > 0;
+//
+//        }
+//
+//        // Get Market Details by Municipality (or any other field)
+//        public Cursor getMarketDetails(String municipality, String productFilter) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//
+//            if (productFilter.equals("All")){
+//                return db.rawQuery(
+//                        "SELECT * FROM markets WHERE municipality = ?",
+//                        new String[]{municipality}
+//                );
+//            }else{
+//                return db.rawQuery(
+//                        "SELECT m.* FROM markets m " +
+//                                "JOIN vendor_products vp ON m.vendor_id = vp.vendor_product_id " +
+//                                "WHERE m.municipality = ? AND vp.vendor_product_name = ?",
+//                        new String[]{municipality, productFilter}
+//                );
+//            }
+//        }
+//
+//
+//        // Method to store request in the db
+//        public boolean insertRequest(String product_name, int quantity, double price, String delivery_date, int vendor_id, int farmer_id, String farmer_name, String phone_number, String request_date, String pickUpOption, String paymentMethod){
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//
+//            values.put("vendor_id", vendor_id);
+//            values.put("product_name", product_name);
+//            values.put("quantity", quantity);
+//            values.put("price", price);
+//            values.put("delivery_date", delivery_date);
+//            values.put("farmer_id", farmer_id);
+//            values.put("farmer_name", farmer_name);
+//            values.put("farmer_number", phone_number);
+//            values.put("request_date", request_date);
+//            values.put("pickup_option", pickUpOption);
+//            values.put("payment_method", paymentMethod);
+//
+//            long result = db.insert(TABLE_PRODUCT_OFFERS, null, values);
+//            return result != -1;
+//        }
+//
+//        // Check if vendor is already in the markets table
+//        public boolean isVendorInMarkets(String vendorId) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            Cursor cursor = db.rawQuery("SELECT * FROM " + TABLE_MARKETS + " WHERE " + COLUMN_MARKET_VENDOR_ID + "=?", new String[]{vendorId});
+//            boolean exists = cursor.moveToFirst();
+//            cursor.close();
+//            return exists;
+//        }
+//
+//        // Add vendor to markets table
+//        public void addVendorToMarkets(int vendorId, String vendorName) {
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//
+//            values.put(COLUMN_MARKET_VENDOR_ID, vendorId);
+//            values.put(COLUMN_MARKET_VENDOR, vendorName);
+//
+//            // Optional: you can set default values for other fields like name/street/phone
+//            db.insert(TABLE_MARKETS, null, values);
+//            db.close();
+//        }
+//
+//        // Get farmers offer
+//        public Cursor getAllFarmerOffers(int vendorId) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            String query = "SELECT id, farmer_name, farmer_number, product_name, price, quantity, delivery_date FROM " + TABLE_PRODUCT_OFFERS  + " WHERE status = 'Pending' AND  vendor_id = ?";
+//            return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
+//        }
+//
+//        // Get all prodcuts received by the vendor
+//        public Cursor getAllReceivedProducts(int vendorId){
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            String query = "SELECT id, farmer_name, farmer_number, product_name, price, quantity, status, received_date FROM " + TABLE_PRODUCT_OFFERS +  " WHERE status = 'Received' AND vendor_id = ?";
+//            return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
+//        }
+//
+//        // Get products sold by vendor
+//        public Cursor getVendorProductsSold(int vendorId) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            return db.rawQuery("SELECT * FROM vendor_products WHERE vendor_product_id = ?", new String[]{String.valueOf(vendorId)});
+//        }
+//
+//        // Get market info
+//        public Cursor getMarketInfoByVendorId(int vendorId) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            return db.rawQuery(
+//                    "SELECT name, street, barangay, phone, municipality, longitude, latitude FROM markets WHERE vendor_id = ?",
+//                    new String[]{String.valueOf(vendorId)}
+//            );
+//        }
+//
+//
+//        // Update market info
+//        public boolean updateMarketInfo(int vendorId, String name, String street, String barangay, String phone, String municipality, String longitude, String latitude) {
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//
+//            values.put("name", name);
+//            values.put("street", street);
+//            values.put("barangay", barangay);
+//            values.put("phone", phone);
+//            values.put("municipality", municipality);
+//            values.put("longitude", longitude);
+//            values.put("latitude", latitude);
+//
+//            int rowsAffected = db.update("markets", values, "vendor_id = ?", new String[]{String.valueOf(vendorId)});
+//            db.close();
+//
+//            return rowsAffected > 0;
+//        }
+//
+//        // Get status of the requests or the farmers offer status
+//        public ArrayList<HashMap<String, String>> getProductOffersByStatus(String status, int farmerId) {
+//            ArrayList<HashMap<String, String>> offerList = new ArrayList<>();
+//            SQLiteDatabase db = this.getReadableDatabase();
+//
+//            // JOIN product_offers with markets using vendor_id
+//            String query = "SELECT po.*, m." + COLUMN_MARKET_NAME + ", m." + COLUMN_MARKET_BARANGGAY +
+//                    " FROM " + TABLE_PRODUCT_OFFERS + " po " +
+//                    "INNER JOIN " + TABLE_MARKETS + " m ON po." + COLUMN_VENDOR_ID + " = m." + COLUMN_MARKET_VENDOR_ID +
+//                    " WHERE po." + COLUMN_STATUS + " = ? AND po." + COLUMN_FARMER_ID + " = ?";
+//
+//            Cursor cursor = db.rawQuery(query, new String[]{status, String.valueOf(farmerId)});
+//
+//            if (cursor.moveToFirst()) {
+//                do {
+//                    HashMap<String, String> offer = new HashMap<>();
+//                    offer.put("id", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_OFFER_ID)));
+//                    offer.put("vendor_id", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_VENDOR_ID)));
+//                    offer.put("farmer_id", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FARMER_ID)));
+//                    offer.put("farmer_name", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FARMER_NAME)));
+//                    offer.put("product_name", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_NAME)));
+//                    offer.put("quantity", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRODUCT_QUANTITY)));
+//                    offer.put("price", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PRICE)));
+//                    offer.put("delivery_date", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DELIVERY_DATE)));
+//                    offer.put("status", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATUS)));
+//                    offer.put("request_date", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_REQUEST_DATE)));
+//
+//                    // Market Info (from join)
+//                    offer.put("market_name", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MARKET_NAME)));
+//                    offer.put("vendor_barangay", cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MARKET_BARANGGAY)));
+//
+//                    offerList.add(offer);
+//                } while (cursor.moveToNext());
+//            }
+//
+//            cursor.close();
+//            db.close();
+//            return offerList;
+//        }
+//
+//
+//        // Approved Products or Accepted Products
+//        public Cursor getApprovedOffersByVendor(int vendorId) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//
+//            // Query to select only approved offers for the given vendorId
+//            String query = "SELECT * FROM " + TABLE_PRODUCT_OFFERS + " WHERE " +
+//                    COLUMN_VENDOR_ID + " = ? AND " +
+//                    COLUMN_STATUS + " = 'Accepted'";  //
+//
+//            return db.rawQuery(query, new String[]{String.valueOf(vendorId)});
+//        }
+//
+//
+//        // Update Products by vendor or the status (Accept and Decline)
+//        public void updateOfferStatus(int offerId, String newStatus) {
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//            values.put("status", newStatus);  // Assuming your table has a "status" column
+//
+//            // Update the status of the offer by offerId
+//            db.update("product_offers", values, COLUMN_PRODUCT_OFFER_ID + " = ?", new String[]{String.valueOf(offerId)});
+//        }
+//
+//        // For received status and the date
+//        public void markOfferAsReceived(int offerId, String currentDate){
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//            values.put("status", "Received");
+//            values.put("received_date", currentDate);
+//
+//            db.update("product_offers", values, COLUMN_PRODUCT_OFFER_ID + " =?", new String[]{String.valueOf(offerId)});
+//        }
+//
+//        // Get crops by month
+//        public Cursor getCropsForMonth(int month) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//
+//            String[] selectionArgs = { "%" + month + "%"};
+//
+//            Cursor cursor = db.rawQuery(
+//                    "SELECT " + COLUMN_CROP_NAME +
+//                    " FROM " + TABLE_CROPS +
+//                    " WHERE " + COLUMN_CROP_PLANTING_MONTHS + " LIKE ?",
+//                    selectionArgs
+//            );
+//
+//            return cursor;
+//        }
+//
+//        // Add vendors products
+//        public boolean addVendorProducts(String product_name, double product_price, String product_unit, int vendor_id){
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//
+//            // To check if the product already exists
+//            String query = "SELECT * FROM " + TABLE_VENDOR_PRODUCTS +
+//                    " WHERE LOWER(vendor_product_name) = LOWER(?) AND vendor_product_id = ?";
+//            Cursor cursor = db.rawQuery(query, new String[]{product_name, String.valueOf(vendor_id)});
+//
+//            if(cursor.getCount() > 0) {
+//                cursor.close();
+//                return false;
+//            }
+//
+//            values.put("vendor_product_name", product_name);
+//            values.put("vendor_product_price", product_price);
+//            values.put("product_unit", product_unit);
+//            values.put("vendor_product_id", vendor_id);
+//
+//            long result = db.insert(TABLE_VENDOR_PRODUCTS, null, values);
+//
+//            return result != -1;
+//
+//        }
+//
+//        // Retrieve the products by vendor
+//        public ArrayList<String> getVendorProducts(int vendorId) {
+//            ArrayList<String> products = new ArrayList<>();
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            Cursor cursor = db.rawQuery("SELECT vendor_product_name, vendor_product_price, product_unit FROM vendor_products WHERE vendor_product_id = ?", new String[]{String.valueOf(vendorId)});
+//
+//            if (cursor.moveToFirst()) {
+//                do {
+//                    String name = cursor.getString(0);
+//                    double price = cursor.getDouble(1);
+//                    String unit = cursor.getString(2);
+//                    products.add(name + " - ₱" + price + "/" + unit);
+//                } while (cursor.moveToNext());
+//            }
+//
+//            cursor.close();
+//            db.close();
+//            return products;
+//        }
+//
+//        // update vendor products
+//        public boolean updateVendorProduct(int vendorId, String oldName, String newName, String newPrice, String newUnit) {
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            ContentValues values = new ContentValues();
+//            values.put("vendor_product_name", newName);
+//            values.put("vendor_product_price", Double.parseDouble(newPrice));
+//            values.put("product_unit", newUnit);
+//
+//            int rowsAffected = db.update("vendor_products", values, "vendor_product_id = ? AND vendor_product_name = ?", new String[]{String.valueOf(vendorId), oldName});
+//
+//            return rowsAffected > 0;
+//
+//        }
+//
+//        // delete product of the vendor
+//        public boolean deleteVendorProduct(int vendorId, String productName) {
+//            SQLiteDatabase db = this.getWritableDatabase();
+//
+//            int result = db.delete(
+//                    "vendor_products",
+//                    "vendor_product_id = ? AND vendor_product_name = ? COLLATE NOCASE",
+//                    new String[]{String.valueOf(vendorId), productName}
+//            );
+//
+//            return result > 0;
+//        }
+//
+//
+//        // vendor checking for info filled up
+//        public boolean isVendorInfoComplete(int vendorId){
+//            SQLiteDatabase db = this.getReadableDatabase();
+//
+//            Cursor cursor = db.rawQuery(
+//                    "SELECT * FROM " + TABLE_MARKETS +
+//                            " WHERE " + COLUMN_MARKET_VENDOR_ID + " = ?" +
+//                            " AND " + COLUMN_MARKET_NAME + " IS NOT NULL AND " + COLUMN_MARKET_NAME + " != ''" +
+//                            " AND " + COLUMN_MARKET_STREET + " IS NOT NULL AND " + COLUMN_MARKET_STREET + " != ''" +
+//                            " AND " + COLUMN_MARKET_BARANGGAY + " IS NOT NULL AND " + COLUMN_MARKET_BARANGGAY + " != ''" +
+//                            " AND " + COLUMN_MARKET_MUNICIPALITY + " IS NOT NULL AND " + COLUMN_MARKET_MUNICIPALITY + " != ''",
+//                    new String[]{String.valueOf(vendorId)}
+//            );
+//
+//            boolean isComplete = cursor.moveToFirst();
+//            return isComplete;
+//        }
 
 
     }

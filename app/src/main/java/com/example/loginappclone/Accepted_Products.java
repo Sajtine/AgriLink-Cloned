@@ -50,7 +50,7 @@ public class Accepted_Products extends AppCompatActivity {
         currentVendorUID = sharedPreferences.getString("uid", null); // vendor UID
 
         setupAdapter();
-        loadApprovedOffers(); // Start listening for Firebase updates
+        loadApprovedOffers();
     }
 
     private void loadApprovedOffers() {
@@ -72,7 +72,6 @@ public class Accepted_Products extends AppCompatActivity {
                                     String deliveryDate = offerSnap.child("deliveryDate").getValue(String.class);
 
                                     if (farmerUID != null) {
-                                        // 🔍 Get farmer name from users/farmers/{farmerUID}
                                         DatabaseReference farmerRef = FirebaseDatabase.getInstance()
                                                 .getReference("users")
                                                 .child("farmers")
@@ -181,5 +180,5 @@ public class Accepted_Products extends AppCompatActivity {
         String currentDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
         dbRef.child(currentVendorUID).child(offerId).child("status").setValue("Received");
         dbRef.child(currentVendorUID).child(offerId).child("receivedDate").setValue(currentDate);
-    }
+    }   
 }
