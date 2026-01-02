@@ -107,23 +107,23 @@
         <ImageView
             android:id="@+id/home"
             android:layout_width="0dp"
-            android:layout_height="23dp"
+            android:layout_height="27dp"
             android:layout_weight="1"
             android:src="@drawable/home" />
 
         <ImageView
             android:id="@+id/location"
             android:layout_width="0dp"
-            android:layout_height="23dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
             android:src="@drawable/location2" />
 
         <ImageView
             android:id="@+id/user_profile"
             android:layout_width="0dp"
-            android:layout_height="23dp"
+            android:layout_height="27dp"
             android:layout_weight="1"
-            android:src="@drawable/user_profile" />
+            android:src="@drawable/profile" />
     </LinearLayout>
 
     <!-- Bottom Navigation Guideline -->

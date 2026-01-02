@@ -46,6 +46,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+
+
 public class Home extends AppCompatActivity {
 
     private ImageView loc, user;
@@ -80,6 +82,7 @@ public class Home extends AppCompatActivity {
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
         }
+
 
         loc = findViewById(R.id.location);
         user = findViewById(R.id.user_profile);
@@ -448,6 +451,45 @@ public class Home extends AppCompatActivity {
                         break;
                     case "ampalaya":
                         cropImage.setImageResource(R.drawable.ampalaya);
+                        break;
+                    case "sugarcane":
+                        cropImage.setImageResource(R.drawable.sugarcane);
+                        break;
+                    case "tomato":
+                        cropImage.setImageResource(R.drawable.tomato);
+                        break;
+                    case "onion":
+                        cropImage.setImageResource(R.drawable.onion);
+                        break;
+                    case "garlic":
+                        cropImage.setImageResource(R.drawable.garlic);
+                        break;
+                    case "mango":
+                        cropImage.setImageResource(R.drawable.mango);
+                        break;
+                    case "coffee":
+                        cropImage.setImageResource(R.drawable.coffe);
+                        break;
+                    case "cabbage":
+                        cropImage.setImageResource(R.drawable.cabbage);
+                        break;
+                    case "carrot":
+                        cropImage.setImageResource(R.drawable.carrot);
+                        break;
+                    case "lettuce":
+                        cropImage.setImageResource(R.drawable.lettuce);
+                        break;
+                    case "siling labuyo":
+                        cropImage.setImageResource(R.drawable.siling_labuyo);
+                        break;
+                    case "ginger":
+                        cropImage.setImageResource(R.drawable.ginger);
+                        break;
+                    case "luyang dilaw":
+                        cropImage.setImageResource(R.drawable.luyang_dilaw);
+                        break;
+                    case "soybean":
+                        cropImage.setImageResource(R.drawable.soybean);
                         break;
                     default:
                         cropImage.setImageResource(R.drawable.temp);

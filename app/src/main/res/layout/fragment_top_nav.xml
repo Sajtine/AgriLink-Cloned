@@ -31,7 +31,7 @@
                 android:layout_height="40dp"
                 android:layout_centerHorizontal="true"
                 android:layout_marginTop="140dp"
-                android:background="@drawable/roundcorners_reg"
+                android:background="@drawable/searchbar"
                 android:queryHint="Search here ... "
                 android:theme="@style/CustomSearchView"/>
 
@@ -45,7 +45,7 @@
                 android:layout_marginTop="140dp"
                 android:text="Empowering Farmers"
                 android:textColor="@android:color/white"
-                android:textSize="18sp"
+                android:textSize="20sp"
                 android:fontFamily="@font/quicksandmeduim"
                 android:visibility="invisible"
                 />

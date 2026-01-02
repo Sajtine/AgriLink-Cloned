@@ -142,9 +142,9 @@
         <ImageView
             android:id="@+id/location"
             android:layout_width="0dp"
-            android:layout_height="23dp"
+            android:layout_height="24dp"
             android:layout_weight="1"
-            android:src="@drawable/location_logo" />
+            android:src="@drawable/location2" />
 
         <!-- Settings Icon -->
         <ImageView
@@ -153,7 +153,7 @@
             android:layout_height="27dp"
             android:layout_weight="1"
             android:contentDescription="Cart"
-            android:src="@drawable/profile2" />
+            android:src="@drawable/profile" />
 
     </LinearLayout>
 

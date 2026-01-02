@@ -139,7 +139,7 @@ public class Requests extends AppCompatActivity {
                 // only add the "No requests" message if nothing matched
                 if (!foundData) {
                     HashMap<String, String> emptyMap = new HashMap<>();
-                    emptyMap.put("product_name", "No " + statusFilter.toLowerCase() + " requests found.");
+                    emptyMap.put("product_name", "No " + statusFilter.toLowerCase() + " offers found.");
                     emptyMap.put("status", "");
                     emptyMap.put("market_name", "");
                     emptyMap.put("vendor_barangay", "");

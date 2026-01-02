@@ -3,11 +3,13 @@ package com.example.loginappclone;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,8 +19,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import com.android.volley.Request;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -130,6 +138,8 @@ public class Request_Sell extends DialogFragment {
             }
 
             submitRequest(name, qtyStr, priceStr, date, paymentMethod, pickUpOption, selectedLatitude, selectedLongitude);
+
+
         });
 
         return view;
@@ -202,6 +212,14 @@ public class Request_Sell extends DialogFragment {
                         }
 
                         Toast.makeText(getContext(), "Request Sent!", Toast.LENGTH_SHORT).show();
+
+                        // Send notification to Vendor
+                        // Inside Request_Sell fragment
+                        Context appContext = getActivity() != null ? getActivity().getApplicationContext() : null;
+                        sendNotificationToVendorPusher(appContext, vendorUID, "New Sell Offer",
+                                "Farmer " + farmerName + " sent an offer.");
+
+
                         dismiss();
                     }
 
@@ -225,4 +243,61 @@ public class Request_Sell extends DialogFragment {
             getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
+
+    // Pusher Notification (Beam)
+    public static void sendNotificationToVendorPusher(Context appContext, String vendorUID, String title, String message) {
+        if (appContext == null) {
+            Log.e("PUSHER", "Application context is null! Cannot send notification.");
+            return;
+        }
+
+        try {
+
+            JSONObject json = new JSONObject();
+            JSONObject data = new JSONObject();
+            JSONObject fcm = new JSONObject();
+            JSONObject notification = new JSONObject();
+
+            notification.put("title", title);
+            notification.put("body", message);
+
+            // Foreground Notification
+            data.put("title", title);
+            data.put("body", message);
+
+            // Background Notification
+            fcm.put("notification", notification);
+            fcm.put("data", data);
+
+            JSONArray interests = new JSONArray();
+            interests.put("vendor_" + vendorUID);
+
+            json.put("interests", interests);
+            json.put("fcm", fcm);
+
+            String url = "https://82e5c130-03f5-40a0-9494-22f7bc17bc27.pushnotifications.pusher.com/publish_api/v1/instances/82e5c130-03f5-40a0-9494-22f7bc17bc27/publishes";
+
+            JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, url, json,
+                    response -> Log.d("PUSHER", "Notification sent successfully: " + response.toString()),
+                    error -> Log.e("PUSHER", "Error sending notification: " + error.toString())
+            ) {
+                @Override
+                public Map<String, String> getHeaders() {
+                    Map<String, String> headers = new HashMap<>();
+                    headers.put("Authorization", "Bearer ACC2F781E0170E544CB222730E491FEFA38C499FD863DD756EF58699578E27CF");
+                    headers.put("Content-Type", "application/json");
+                    return headers;
+                }
+            };
+
+            Volley.newRequestQueue(appContext).add(request);
+
+        } catch (Exception e) {
+            Log.e("PUSHER", "Exception while sending notification: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+
+
 }

@@ -39,7 +39,6 @@ public class Chat extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chat);
 
-        // set chatWith name
         Toolbar toolbar = findViewById(R.id.chatToolbar);
         setSupportActionBar(toolbar);
 
@@ -54,7 +53,6 @@ public class Chat extends AppCompatActivity {
         // Get person to chat with
         chatWith = getIntent().getStringExtra("chatWithUID");
 
-        // Fetch username to display in toolbar
         DatabaseReference userRef = FirebaseDatabase.getInstance()
                 .getReference("users")
                 .child(chatWith)
@@ -66,7 +64,7 @@ public class Chat extends AppCompatActivity {
                 String username = snapshot.getValue(String.class);
                 if (getSupportActionBar() != null) {
                     getSupportActionBar().setTitle(username != null ? username : "Chat");
-                    getSupportActionBar().setDisplayHomeAsUpEnabled(true); // back arrow
+                    getSupportActionBar().setDisplayHomeAsUpEnabled(true);
                 }
             }
 
@@ -134,10 +132,6 @@ public class Chat extends AppCompatActivity {
                     if (msg != null) {
                         messages.add(msg);
 
-                        // ✅ Only mark as read if:
-                        // 1. The message is for currentUser
-                        // 2. The message is from the person you're chatting with
-                        // 3. It hasn't been read yet
                         if (msg.receiverId.equals(currentUser)
                                 && msg.senderId.equals(chatWith)
                                 && !msg.isRead) {

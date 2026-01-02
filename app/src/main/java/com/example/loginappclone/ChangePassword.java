@@ -35,30 +35,24 @@ public class ChangePassword extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_change_password);
 
-        // Firebase reference
         rootRef = FirebaseDatabase.getInstance().getReference("users");
 
-        // Get phone number from previous activity
         phone = getIntent().getStringExtra("phone");
-
 
 
         if (phone != null) {
             // If the number starts with "0", replace it with "+63"
-
             Log.d("OTP_DEBUG", "Phone Number: " + phone);
 
             if (phone.startsWith("0")) {
                 phone = "+63" + phone.substring(1);
             }
 
-            // Optional: if user might already include +63, you can ensure no double prefix
             else if (!phone.startsWith("+63")) {
                 phone = "+63" + phone;
             }
         }
 
-        // Initialize views
         newPassword = findViewById(R.id.new_password);
         confirmPassword = findViewById(R.id.confirm_password);
         backToLogin = findViewById(R.id.back_to_login);
@@ -86,7 +80,6 @@ public class ChangePassword extends AppCompatActivity {
                 return;
             }
 
-            // Try updating under farmers first
             updatePasswordInNode("farmers", newPass);
         });
 
@@ -154,13 +147,13 @@ public class ChangePassword extends AppCompatActivity {
 
     private void togglePasswordVisibility(EditText editText, boolean[] isPasswordVisible) {
         Drawable[] drawables = editText.getCompoundDrawables();
-        Drawable currentLeft = drawables[0]; // keep existing left drawable (if any)
+        Drawable currentLeft = drawables[0];
 
         if (!isPasswordVisible[0]) {
             // Show password
             editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
             editText.setCompoundDrawablesWithIntrinsicBounds(
-                    currentLeft, // do not add or change
+                    currentLeft,
                     null,
                     ContextCompat.getDrawable(this, R.drawable.eye),
                     null);
@@ -168,7 +161,7 @@ public class ChangePassword extends AppCompatActivity {
             // Hide password
             editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
             editText.setCompoundDrawablesWithIntrinsicBounds(
-                    currentLeft, // do not add or change
+                    currentLeft,
                     null,
                     ContextCompat.getDrawable(this, R.drawable.closed_eye),
                     null);

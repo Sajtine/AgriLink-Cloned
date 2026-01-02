@@ -7,7 +7,7 @@
     tools:context=".MainActivity"
     android:gravity="center"
     android:padding="20dp"
-    android:background="@drawable/background"
+    android:background="#FFFEF2"
     android:fitsSystemWindows="false"
     >
 
@@ -21,11 +21,11 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="40dp"
+            android:layout_marginBottom="35dp"
             android:fontFamily="monospace"
             android:gravity="center"
             android:text="Register"
-            android:textColor="@color/white"
+            android:textColor="@color/shade1_green"
             android:textSize="40dp"
 
         />
@@ -41,8 +41,8 @@
             android:hint="Fullname"
             android:inputType="textPersonName"
             android:padding="12dp"
-            android:textColor="@color/white"
-            android:textColorHint="@color/white"
+            android:textColor="#262626"
+            android:textColorHint="#959CA3"
         />
 
         <EditText
@@ -56,8 +56,8 @@
             android:hint="Phone Number"
             android:inputType="phone"
             android:padding="12dp"
-            android:textColor="@color/white"
-            android:textColorHint="@color/white"
+            android:textColor="#262626"
+            android:textColorHint="#959CA3"
 
         />
 
@@ -67,15 +67,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:background="@drawable/roundcorners_reg"
-            android:drawableLeft="@drawable/password"
-            android:drawableRight="@drawable/closed_eye"
+            android:drawableStart="@drawable/password"
+            android:drawableEnd="@drawable/closed_eye"
             android:drawablePadding="10dp"
             android:hint="Password"
             android:inputType="textPassword"
             android:padding="12dp"
-            android:textColor="@color/white"
-            android:textColorHint="@color/white"
-            android:drawableTint="@color/white" />
+            android:textColor="#262626"
+            android:textColorHint="#959CA3"/>
 
 
         <EditText
@@ -84,14 +83,14 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:background="@drawable/roundcorners_reg"
-            android:drawableLeft="@drawable/password"
+            android:drawableStart="@drawable/password"
             android:drawablePadding="10dp"
             android:hint="Re-enter Password"
             android:inputType="textPassword"
-            android:drawableRight="@drawable/closed_eye"
+            android:drawableEnd="@drawable/closed_eye"
             android:padding="12dp"
-            android:textColor="@color/white"
-            android:textColorHint="@color/white" />
+            android:textColor="#262626"
+            android:textColorHint="#959CA3"/>
 
         <Spinner
             android:id="@+id/userTypeSpinner"
@@ -101,20 +100,21 @@
             android:background="@drawable/roundcorners_reg"
             android:padding="12dp"
             android:entries="@array/user_types"
+            android:spinnerMode="dropdown"
             />
-
-
 
         <Button
             android:id="@+id/submit"
             android:layout_width="200dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:backgroundTint="@color/white"
+            android:backgroundTint="@null"
+            app:backgroundTint="@null"
+            android:background="@drawable/button_drawable"
             android:fontFamily="serif-monospace"
             android:padding="16dp"
             android:text="Register"
-            android:textColor="#000000"
+            android:textColor="@color/white"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -125,7 +125,7 @@
             android:layout_marginTop="16dp"
             android:gravity="center"
             android:text="Login here!"
-            android:textColor="@color/white"
+            android:textColor="@color/black"
             android:textSize="18sp"
 
             />

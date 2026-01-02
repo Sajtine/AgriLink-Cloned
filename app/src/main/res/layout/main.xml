@@ -6,7 +6,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background"
+    android:background="#FFFEF2"
     tools:layout_editor_absoluteX="0dp"
     tools:layout_editor_absoluteY="-10dp">
 
@@ -30,26 +30,28 @@
         android:layout_width="0dp"
         android:layout_height="200dp"
         android:src="@drawable/farming_icon"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/textView"
         app:layout_constraintEnd_toEndOf="@id/image_end"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="@id/image_start"
         app:layout_constraintTop_toBottomOf="@+id/textView4"
         app:layout_constraintVertical_bias="0.0" />
 
+
     <TextView
+        android:id="@+id/textView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:fontFamily="@font/latoitalic"
         android:text="AgriLink"
         android:textColor="@color/black"
         android:textSize="35sp"
-        app:layout_constraintBottom_toTopOf="@+id/phone_number"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/imageView"
-        app:layout_constraintVertical_bias="0.097" />
-
+        app:layout_constraintBottom_toTopOf="@+id/label4"
+        app:layout_constraintEnd_toEndOf="@id/label2"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@id/label1"
+        app:layout_constraintTop_toBottomOf="@+id/label3"
+        app:layout_constraintVertical_bias="1.0" />
 
     <EditText
         android:id="@+id/phone_number"
@@ -64,8 +66,8 @@
         android:inputType="phone"
         android:maxLines="1"
         android:padding="10dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/white"
+        android:textColor="#262626"
+        android:textColorHint="#959CA3"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/editText_end"
@@ -87,8 +89,8 @@
         android:inputType="textPassword"
         android:padding="10dp"
         android:paddingStart="10dp"
-        android:textColor="@color/white"
-        android:textColorHint="@color/white"
+        android:textColor="#262626"
+        android:textColorHint="#959CA3"
         android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@id/editText_end"
@@ -96,6 +98,7 @@
         app:layout_constraintStart_toStartOf="@id/editText_start"
         app:layout_constraintTop_toBottomOf="@+id/phone_number"
         app:layout_constraintVertical_bias="0.093" />
+
 
     <TextView
         android:id="@+id/forgotPassword"
@@ -105,22 +108,25 @@
         android:focusable="true"
         android:fontFamily="@font/quicksandmeduim"
         android:paddingTop="10dp"
-        android:text="Forgot Password?"
+        android:text="@string/forgot_password"
         android:textColor="@color/white"
         android:textSize="17sp"
         app:layout_constraintEnd_toEndOf="@id/password"
+        app:layout_constraintHorizontal_bias="1.0"
         app:layout_constraintStart_toStartOf="@id/password"
         app:layout_constraintTop_toBottomOf="@id/password" />
-
 
     <Button
         android:id="@+id/submit"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:backgroundTint="@color/white"
-        android:fontFamily="@font/latoregular"
+        android:fontFamily="serif-monospace"
+        android:textStyle="bold"
         android:text="Login"
-        android:textColor="@color/black"
+        android:backgroundTint="@null"
+        app:backgroundTint="@null"
+        android:textColor="@color/white"
+        android:background="@drawable/button_drawable"
         android:textSize="22sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="@+id/login2"
@@ -194,5 +200,34 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         app:layout_constraintGuide_percent="0.44" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/label1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.35" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/label2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.65" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/label3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.36" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/label4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.41" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>

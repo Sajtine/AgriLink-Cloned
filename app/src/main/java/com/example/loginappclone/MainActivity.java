@@ -2,9 +2,11 @@ package com.example.loginappclone;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.InputType;
@@ -22,6 +24,9 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.pusher.pushnotifications.PushNotifications;
+
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,6 +34,13 @@ public class MainActivity extends AppCompatActivity {
     private Button login_button;
     private TextView register, forgotPassword;
     String formattedNumber;
+
+    private boolean isColorDark(int color) {
+        double darkness = 1 - (0.299 * Color.red(color) +
+                0.587 * Color.green(color) +
+                0.114 * Color.blue(color)) / 255;
+        return darkness >= 0.5;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +57,22 @@ public class MainActivity extends AppCompatActivity {
         getWindow().getDecorView().setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
 
+        int backgroundColor = ContextCompat.getColor(this, R.color.white);
+        if (isColorDark(backgroundColor)) {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        } else {
+            getWindow().getDecorView().setSystemUiVisibility(
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+        }
+
         // Check if user already logged in
         SharedPreferences sharedPreferences = getSharedPreferences("UserSession", MODE_PRIVATE);
         String role = sharedPreferences.getString("role", null);
+        String uid = sharedPreferences.getString("uid", null);
+
+        Set<String> interestSet = PushNotifications.getDeviceInterests();
+        Log.d("PushNotifications", "Current device interests: " + interestSet);
 
         if (role != null) {
             // User already logged in, redirect based on role

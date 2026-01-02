@@ -8,5 +8,8 @@
     </string-array>
 
     <string name="weather_icon">Weather Icon</string>
+    <string name="forgot_password">
+        <font color="#2196F3"><u>Forgot Password?</u></font>
+    </string>
 
 </resources>

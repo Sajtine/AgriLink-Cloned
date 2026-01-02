@@ -219,7 +219,7 @@
                             style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="Request to Sell Product"
+                            android:text="Offer to Sell Product"
                             android:textStyle="bold"
                             android:letterSpacing="0.05"
                             android:textColor="@color/shade1_green"
@@ -257,7 +257,7 @@
             android:layout_width="0dp"
             android:layout_height="23dp"
             android:layout_weight="1"
-            android:src="@drawable/location_logo" />
+            android:src="@drawable/location2" />
 
         <!-- Settings Icon -->
         <ImageView

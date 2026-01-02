@@ -9,6 +9,7 @@
     import android.database.sqlite.SQLiteDatabase;
     import android.database.sqlite.SQLiteOpenHelper;
     import android.util.Log;
+    import android.widget.Button;
     import android.widget.Toast;
 
     import androidx.annotation.NonNull;
@@ -20,6 +21,7 @@
     import com.google.firebase.database.DatabaseReference;
     import com.google.firebase.database.FirebaseDatabase;
     import com.google.firebase.database.ValueEventListener;
+    import com.pusher.pushnotifications.PushNotifications;
 
     import java.util.ArrayList;
     import java.util.HashMap;
@@ -203,9 +205,9 @@
                     "('Calamansi', '1,2,3,4,5,6,7,8,9,10,11,12')," +
                     "('Melon', '2,3,4')," +
                     "('Soybean', '5,6,7')," +
-                    "('Chili Pepper (Siling Labuyo)', '11,12,1')," +
+                    "('Siling Labuyo', '11,12,1')," +
                     "('Ginger', '4,5,6')," +
-                    "('Turmeric (Luyang Dilaw)', '5,6,7');");
+                    "('Luyang Dilaw', '5,6,7');");
         }
 
         @Override
@@ -221,7 +223,7 @@
 //        -------------------------------------- Firebase Functions --------------------------------------------
 
         // Register User with Firebase and save data inside Firebase
-        public void registerUser(String username, String phoneNumber, String userRole, String password, Context context) {
+        public void registerUser(String username, String phoneNumber, String userRole, String password, Context context, Button register) {
             FirebaseDatabase database = FirebaseDatabase.getInstance();
             DatabaseReference rootRef = database.getReference("users");
             String rolePath = userRole.equalsIgnoreCase("farmer") ? "farmers" : "vendors";
@@ -240,6 +242,7 @@
             String userUID = rootRef.push().getKey();
             if (userUID == null) {
                 Toast.makeText(context, "Failed to generate user ID", Toast.LENGTH_SHORT).show();
+                register.setEnabled(true);
                 return;
             }
 
@@ -255,6 +258,7 @@
                         if (formattedNumber.equals(existingPhone)) {
                             phoneExists = true;
                             Toast.makeText(context, "Phone number already registered as Farmer!", Toast.LENGTH_SHORT).show();
+                            register.setEnabled(true);
                             break;
                         }
                     }
@@ -266,6 +270,7 @@
                             if (formattedNumber.equals(existingPhone)) {
                                 phoneExists = true;
                                 Toast.makeText(context, "Phone number already registered as Vendor!", Toast.LENGTH_SHORT).show();
+                                register.setEnabled(true);
                                 break;
                             }
                         }
@@ -284,18 +289,26 @@
                         userRef.setValue(userData)
                                 .addOnSuccessListener(aVoid -> {
                                     Toast.makeText(context, "Registration successful!", Toast.LENGTH_SHORT).show();
+                                    register.setEnabled(true);
                                     Intent intent = new Intent(context, MainActivity.class);
                                     context.startActivity(intent);
                                     if (context instanceof Activity) {
                                         ((Activity) context).finish();
                                     }
                                 })
-                                .addOnFailureListener(e -> Toast.makeText(context, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show());
+                                .addOnFailureListener(e -> {
+                                    Toast.makeText(context, "Failed to save user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                    register.setEnabled(true);
+                                });
+
                     }
                 }
 
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {}
+                public void onCancelled(@NonNull DatabaseError error) {
+                    Toast.makeText(context, "Database error: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+                    register.setEnabled(true);
+                }
             });
         }
 
@@ -377,6 +390,20 @@
                 editor.putString("role", role);
                 editor.apply();
 
+                // Subscribe device to Pusher Beams interest
+                try {
+                    if (role.equals("farmers")) {
+                        PushNotifications.addDeviceInterest("farmer_" + uid);
+                    } else {
+                        PushNotifications.addDeviceInterest("vendor_" + uid);
+                        Log.d("PushNotifications", "Successfully added device interest: vendor_" + uid);
+                    }
+                } catch (Exception e) {
+                    Log.e("PUSH", "Error subscribing to Pusher interest: " + e.getMessage());
+                    e.printStackTrace();
+                }
+
+                // Redirect based on role
                 if (role.equals("farmers")) {
                     context.startActivity(new android.content.Intent(context, Home.class));
                 } else {
@@ -389,7 +416,6 @@
                 Toast.makeText(context, "Incorrect Password!", Toast.LENGTH_SHORT).show();
             }
         }
-
 
 
 
@@ -423,37 +449,37 @@
 
 
         // Check Login
-        public String checkUserRole(String email, String password) {
-            SQLiteDatabase db = this.getReadableDatabase();
-            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID + ", " + COLUMN_USERNAME + ", " + COLUMN_USER_TYPE + " FROM " + TABLE_NAME + " WHERE " +
-                    COLUMN_EMAIL + "=? AND " + COLUMN_PASSWORD + "=?", new String[]{email, password});
-
-            String result = null;
-            if (cursor.moveToFirst()) {
-                int userId = cursor.getInt(0);
-                String username = cursor.getString(1);
-                String role = cursor.getString(2);
-                result = userId + "," + username + "," + role;
-            }
-
-            cursor.close();
-            db.close();
-            return result;
-        }
-
-        // Delete User Data
-        public void deleteData() {
-            SQLiteDatabase db = this.getWritableDatabase();
-            int deletedRows = db.delete(TABLE_NAME, null, null);
-            db.close();
-            android.util.Log.d("DB_DEBUG", "Deleted " + deletedRows + " rows from database.");
-        }
-
-        // Get User Details by Email
-        public Cursor getUserDetails(String email) {
-            SQLiteDatabase db = this.getReadableDatabase();
-            return db.rawQuery("SELECT username, email, phone_number, address FROM users WHERE email=?", new String[]{email});
-        }
+//        public String checkUserRole(String email, String password) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            Cursor cursor = db.rawQuery("SELECT " + COLUMN_ID + ", " + COLUMN_USERNAME + ", " + COLUMN_USER_TYPE + " FROM " + TABLE_NAME + " WHERE " +
+//                    COLUMN_EMAIL + "=? AND " + COLUMN_PASSWORD + "=?", new String[]{email, password});
+//
+//            String result = null;
+//            if (cursor.moveToFirst()) {
+//                int userId = cursor.getInt(0);
+//                String username = cursor.getString(1);
+//                String role = cursor.getString(2);
+//                result = userId + "," + username + "," + role;
+//            }
+//
+//            cursor.close();
+//            db.close();
+//            return result;
+//        }
+//
+//        // Delete User Data
+//        public void deleteData() {
+//            SQLiteDatabase db = this.getWritableDatabase();
+//            int deletedRows = db.delete(TABLE_NAME, null, null);
+//            db.close();
+//            android.util.Log.d("DB_DEBUG", "Deleted " + deletedRows + " rows from database.");
+//        }
+//
+//        // Get User Details by Email
+//        public Cursor getUserDetails(String email) {
+//            SQLiteDatabase db = this.getReadableDatabase();
+//            return db.rawQuery("SELECT username, email, phone_number, address FROM users WHERE email=?", new String[]{email});
+//        }
 
         // Update User Details or Farmer Details
 //        public boolean updateFarmerDetails(String email, String newName, String newAddress, String newPhone_number){
@@ -656,20 +682,20 @@
 //        }
 //
 //        // Get crops by month
-//        public Cursor getCropsForMonth(int month) {
-//            SQLiteDatabase db = this.getReadableDatabase();
-//
-//            String[] selectionArgs = { "%" + month + "%"};
-//
-//            Cursor cursor = db.rawQuery(
-//                    "SELECT " + COLUMN_CROP_NAME +
-//                    " FROM " + TABLE_CROPS +
-//                    " WHERE " + COLUMN_CROP_PLANTING_MONTHS + " LIKE ?",
-//                    selectionArgs
-//            );
-//
-//            return cursor;
-//        }
+        public Cursor getCropsForMonth(int month) {
+            SQLiteDatabase db = this.getReadableDatabase();
+
+            String[] selectionArgs = { "%" + month + "%"};
+
+            Cursor cursor = db.rawQuery(
+                    "SELECT " + COLUMN_CROP_NAME +
+                    " FROM " + TABLE_CROPS +
+                    " WHERE " + COLUMN_CROP_PLANTING_MONTHS + " LIKE ?",
+                    selectionArgs
+            );
+
+            return cursor;
+        }
 //
 //        // Add vendors products
 //        public boolean addVendorProducts(String product_name, double product_price, String product_unit, int vendor_id){
